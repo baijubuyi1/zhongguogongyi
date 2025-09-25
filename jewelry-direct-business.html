@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直营业务驾驶舱 - 保利工艺大屏可视化系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 继承全局样式 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --green-color: #20C997;
+            --purple-color: #7952B3;
+            --border-color: rgba(74, 144, 226, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 科技感网格背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        /* 返回按钮样式 */
+        .back-button {
+            background-color: var(--secondary-bg-color);
+            color: var(--gold-color);
+            border: 1px solid var(--gold-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-button:hover {
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            text-decoration: none;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: rgba(16, 31, 61, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--white-color);
+        }
+        
+        .breadcrumb-link {
+            color: var(--white-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb-link:hover {
+            color: var(--gold-color);
+        }
+        
+        .breadcrumb-separator {
+            color: var(--white-color);
+            opacity: 0.5;
+        }
+        
+        .breadcrumb-current {
+            color: var(--gold-color);
+            font-weight: 500;
+        }
+        
+        /* 顶部KPI汇总 */
+        .kpi-summary {
+            background-color: var(--secondary-bg-color);
+            margin: 20px 30px;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .kpi-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .kpi-item:last-child {
+            border-right: none;
+        }
+        
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--gold-color);
+            margin-bottom: 5px;
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: var(--white-color);
+            opacity: 0.8;
+        }
+        
+        /* 标签页样式 */
+        .tabs-container {
+            margin: 0 30px;
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px 10px 0 0;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+        }
+        
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: var(--white-color);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .tab-button:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab-button.active {
+            color: var(--gold-color);
+            font-weight: 500;
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20%;
+            width: 60%;
+            height: 3px;
+            background-color: var(--gold-color);
+            border-radius: 2px;
+        }
+        
+        /* 标签内容区 */
+        .tab-content {
+            background-color: var(--secondary-bg-color);
+            margin: 0 30px 30px 30px;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            min-height: 500px;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        /* 销售分析布局 */
+        .sales-analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-card {
+            background-color: rgba(16, 31, 61, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+        }
+        
+        .chart-title {
+            color: var(--light-gold);
+            font-size: 1rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+        
+        .chart-container-full {
+            height: 350px;
+        }
+        
+        /* 产品分析网格 */
+        .product-analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* 数据表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .data-table th {
+            background-color: rgba(16, 31, 61, 0.7);
+            color: var(--light-gold);
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.1);
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(74, 144, 226, 0.05);
+        }
+        
+        .clickable-row {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .clickable-row:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+            transform: translateX(5px);
+        }
+        
+        /* 门店分析 - 修改为列表展示 */
+        .store-list-container {
+            background-color: rgba(16, 31, 61, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+        }
+        
+        .store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .store-card {
+            background-color: rgba(16, 31, 61, 0.7);
+            border-radius: 6px;
+            padding: 15px;
+            border-left: 4px solid var(--blue-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .store-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .store-card.warning {
+            border-left-color: var(--orange-color);
+        }
+        
+        .store-card.danger {
+            border-left-color: var(--red-color);
+        }
+        
+        .store-name {
+            font-weight: 500;
+            color: var(--light-gold);
+            margin-bottom: 8px;
+        }
+        
+        .store-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .store-metric {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* 健康度标签 */
+        .health-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        
+        .health-good {
+            background-color: rgba(32, 201, 151, 0.2);
+            color: var(--green-color);
+        }
+        
+        .health-warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+        }
+        
+        .health-danger {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: var(--red-color);
+        }
+        
+        /* 库存分析 */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .risk-list {
+            background-color: rgba(16, 31, 61, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .risk-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 69, 0, 0.1);
+            border-left: 4px solid var(--red-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .risk-item:hover {
+            background-color: rgba(255, 69, 0, 0.2);
+            transform: translateX(5px);
+        }
+        
+        /* 搜索和筛选栏 */
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            background-color: rgba(16, 31, 61, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--white-color);
+            font-size: 0.9rem;
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .filter-select {
+            padding: 10px 15px;
+            background-color: rgba(16, 31, 61, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--white-color);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .sales-analysis-grid,
+            .product-analysis-grid,
+            .inventory-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .store-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .kpi-summary {
+                flex-wrap: wrap;
+            }
+            
+            .kpi-item {
+                flex: 1 0 45%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                margin-bottom: 10px;
+            }
+            
+            .tabs-header {
+                flex-wrap: wrap;
+            }
+            
+            .tab-button {
+                flex: 1 0 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="nav-breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-link">首页</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="jewelry-retail.html" class="breadcrumb-link">珠宝零售业务</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">直营业务驾驶舱</span>
+        </div>
+        <!-- 删除了右上角的返回按钮 -->
+    </nav>
+    
+    <!-- 添加返回上一级按钮 -->
+    <a href="jewelry-retail.html" class="back-button">← 返回上一级</a>
+    
+    <!-- 顶部KPI汇总 -->
+    <div class="kpi-summary">
+        <div class="kpi-item">
+            <div class="kpi-value">8,500万</div>
+            <div class="kpi-label">直营总销售额</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">1,530万</div>
+            <div class="kpi-label">总利润</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">45.2%</div>
+            <div class="kpi-label">平均毛利率</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">12,800</div>
+            <div class="kpi-label">平均客单价</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">2.3</div>
+            <div class="kpi-label">平均连带率</div>
+        </div>
+    </div>
+    
+    <!-- 标签页容器 -->
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button class="tab-button active" onclick="switchTab('sales')">销售分析</button>
+            <button class="tab-button" onclick="switchTab('product')">产品分析</button>
+            <button class="tab-button" onclick="switchTab('store')">门店分析</button>
+            <button class="tab-button" onclick="switchTab('inventory')">库存分析</button>
+        </div>
+    </div>
+    
+    <!-- 标签内容区 -->
+    <div class="tab-content">
+        <!-- 销售分析标签 -->
+        <div class="tab-pane active" id="sales-tab">
+            <div class="sales-analysis-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">区域销售额/利润贡献对比</h3>
+                    <div class="chart-container">
+                        <canvas id="regionSalesChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">门店销售额排名 TOP 10</h3>
+                    <div class="chart-container">
+                        <canvas id="storeRankingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">月度销售趋势分析</h3>
+                <div class="chart-container chart-container-full">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 产品分析标签 -->
+        <div class="tab-pane" id="product-tab">
+            <div class="product-analysis-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">产品大类销售占比</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">自有产品 vs 通用款分析</h3>
+                    <div class="chart-container">
+                        <canvas id="productTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-bar">
+                <input type="text" class="search-input" placeholder="搜索产品名称或SKU..." id="productSearch">
+                <select class="filter-select" id="categoryFilter">
+                    <option value="">所有品类</option>
+                    <option value="gold">黄金</option>
+                    <option value="diamond">镶嵌</option>
+                    <option value="kgold">K金</option>
+                    <option value="jade">翡翠</option>
+                </select>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>产品名称</th>
+                        <th>SKU</th>
+                        <th>品类</th>
+                        <th>销售额</th>
+                        <th>销量</th>
+                        <th>毛利率</th>
+                        <th>库存量</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    <tr class="clickable-row" onclick="navigateToProduct('千足金龙凤手镯')">
+                        <td>千足金龙凤手镯</td>
+                        <td>G1001</td>
+                        <td>黄金</td>
+                        <td>520万</td>
+                        <td>156</td>
+                        <td>42.5%</td>
+                        <td>89</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="navigateToProduct('18K金钻石项链')">
+                        <td>18K金钻石项链</td>
+                        <td>D2005</td>
+                        <td>镶嵌</td>
+                        <td>380万</td>
+                        <td>95</td>
+                        <td>55.2%</td>
+                        <td>42</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="navigateToProduct('星辰之泪系列')">
+                        <td>星辰之泪系列</td>
+                        <td>S3010</td>
+                        <td>镶嵌</td>
+                        <td>150万</td>
+                        <td>25</td>
+                        <td>48.9%</td>
+                        <td>186</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 门店分析标签 -->
+        <div class="tab-pane" id="store-tab">
+            <div class="store-list-container">
+                <h3 class="chart-title">直营门店分布</h3> <!-- 删除了健康度字样 -->
+                <div class="store-grid">
+                    <div class="store-card danger" onclick="navigateToStore('上海南京东路店')">
+                        <!-- 删除了健康度标签 -->
+                        <div class="store-name">上海南京东路店</div>
+                        <div class="store-metrics">
+                            <div class="store-metric">
+                                <span>销售额:</span>
+                                <span>1,200万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>利润:</span>
+                                <span style="color: var(--red-color);">-156万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>坪效:</span>
+                                <span>8,500元/㎡</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>人效:</span>
+                                <span>45.2万/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card" onclick="navigateToStore('北京王府井店')">
+                        <!-- 删除了健康度标签 -->
+                        <div class="store-name">北京王府井店</div>
+                        <div class="store-metrics">
+                            <div class="store-metric">
+                                <span>销售额:</span>
+                                <span>980万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>利润:</span>
+                                <span style="color: var(--green-color);">186万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>坪效:</span>
+                                <span>12,300元/㎡</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>人效:</span>
+                                <span>68.5万/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card warning" onclick="navigateToStore('广州天河店')">
+                        <!-- 删除了健康度标签 -->
+                        <div class="store-name">广州天河店</div>
+                        <div class="store-metrics">
+                            <div class="store-metric">
+                                <span>销售额:</span>
+                                <span>750万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>利润:</span>
+                                <span style="color: var(--green-color);">95万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>坪效:</span>
+                                <span>9,800元/㎡</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>人效:</span>
+                                <span>35.6万/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card" onclick="navigateToStore('深圳万象城店')">
+                        <!-- 删除了健康度标签 -->
+                        <div class="store-name">深圳万象城店</div>
+                        <div class="store-metrics">
+                            <div class="store-metric">
+                                <span>销售额:</span>
+                                <span>680万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>利润:</span>
+                                <span style="color: var(--green-color);">128万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>坪效:</span>
+                                <span>11,200元/㎡</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>人效:</span>
+                                <span>58.3万/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card" onclick="navigateToStore('成都春熙路店')">
+                        <!-- 删除了健康度标签 -->
+                        <div class="store-name">成都春熙路店</div>
+                        <div class="store-metrics">
+                            <div class="store-metric">
+                                <span>销售额:</span>
+                                <span>620万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>利润:</span>
+                                <span style="color: var(--green-color);">112万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>坪效:</span>
+                                <span>10,500元/㎡</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>人效:</span>
+                                <span>52.8万/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card" onclick="navigateToStore('杭州武林店')">
+                        <!-- 删除了健康度标签 -->
+                        <div class="store-name">杭州武林店</div>
+                        <div class="store-metrics">
+                            <div class="store-metric">
+                                <span>销售额:</span>
+                                <span>580万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>利润:</span>
+                                <span style="color: var(--green-color);">105万</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>坪效:</span>
+                                <span>9,650元/㎡</span>
+                            </div>
+                            <div class="store-metric">
+                                <span>人效:</span>
+                                <span>48.3万/人</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>门店名称</th>
+                        <th>所在城市</th>
+                        <th>销售额</th>
+                        <th>利润</th>
+                        <th>坪效(元/㎡)</th>
+                        <th>人效(万/人)</th>
+                        <th>库存周转天数</th>
+                        <!-- 删除了健康度列 -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="clickable-row" onclick="navigateToStore('上海南京东路店')">
+                        <td>上海南京东路店</td>
+                        <td>上海</td>
+                        <td>1,200万</td>
+                        <td style="color: var(--red-color);">-156万</td>
+                        <td>8,500</td>
+                        <td>45.2</td>
+                        <td>125</td>
+                        <!-- 删除了健康度列内容 -->
+                    </tr>
+                    <tr class="clickable-row" onclick="navigateToStore('北京王府井店')">
+                        <td>北京王府井店</td>
+                        <td>北京</td>
+                        <td>980万</td>
+                        <td style="color: var(--green-color);">186万</td>
+                        <td>12,300</td>
+                        <td>68.5</td>
+                        <td>45</td>
+                        <!-- 删除了健康度列内容 -->
+                    </tr>
+                    <tr class="clickable-row" onclick="navigateToStore('广州天河店')">
+                        <td>广州天河店</td>
+                        <td>广州</td>
+                        <td>750万</td>
+                        <td style="color: var(--green-color);">95万</td>
+                        <td>9,800</td>
+                        <td>35.6</td>
+                        <td>78</td>
+                        <!-- 删除了健康度列内容 -->
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 库存分析标签 -->
+        <div class="tab-pane" id="inventory-tab">
+            <div class="inventory-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">库龄结构分布</h3>
+                    <div class="chart-container">
+                        <canvas id="inventoryAgeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">门店库存金额 TOP 10</h3>
+                    <div class="chart-container">
+                        <canvas id="storeInventoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="risk-list">
+                <h3 class="chart-title">重点库存情况</h3> <!-- 修改了标题文字 -->
+                <div class="risk-item" onclick="navigateToProduct('星辰之泪项链')">
+                    <strong>星辰之泪项链</strong> - 上海南京东路店
+                    <br>库龄: 186天 | 库存金额: 125万 | 数量: 15件
+                </div>
+                <div class="risk-item" onclick="navigateToProduct('翡翠如意吊坠')">
+                    <strong>翡翠如意吊坠</strong> - 广州天河店
+                    <br>库龄: 203天 | 库存金额: 89万 | 数量: 8件
+                </div>
+                <div class="risk-item" onclick="navigateToProduct('古法金手镯')">
+                    <strong>古法金手镯</strong> - 成都春熙路店
+                    <br>库龄: 195天 | 库存金额: 156万 | 数量: 22件
+                </div>
+                <div class="risk-item" onclick="navigateToProduct('钻石戒指套装')">
+                    <strong>钻石戒指套装</strong> - 深圳万象城店
+                    <br>库龄: 220天 | 库存金额: 78万 | 数量: 5件
+                </div>
+                <div class="risk-item" onclick="navigateToProduct('玉兰花胸针')">
+                    <strong>玉兰花胸针</strong> - 杭州武林店
+                    <br>库龄: 198天 | 库存金额: 45万 | 数量: 12件
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 标签切换功能
+        function switchTab(tabName) {
+            // 移除所有active类
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            // 添加active类到当前标签
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // 初始化对应标签的图表
+            if (tabName === 'sales' && !window.salesChartsInitialized) {
+                initSalesCharts();
+                window.salesChartsInitialized = true;
+            } else if (tabName === 'product' && !window.productChartsInitialized) {
+                initProductCharts();
+                window.productChartsInitialized = true;
+            } else if (tabName === 'inventory' && !window.inventoryChartsInitialized) {
+                initInventoryCharts();
+                window.inventoryChartsInitialized = true;
+            }
+        }
+        
+        // 导航函数
+        function navigateToStore(storeName) {
+            window.location.href = `jewelry-store-detail.html?store=${encodeURIComponent(storeName)}`;
+        }
+        
+        function navigateToProduct(productName) {
+            window.location.href = `jewelry-product-detail.html?product=${encodeURIComponent(productName)}`;
+        }
+        
+        // 初始化销售分析图表
+        function initSalesCharts() {
+            // 区域销售额/利润贡献对比
+            const regionCtx = document.getElementById('regionSalesChart').getContext('2d');
+            new Chart(regionCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['华东', '华北', '华南', '华中', '西南'],
+                    datasets: [{
+                        label: '销售额(万)',
+                        data: [3200, 1800, 2100, 980, 400],
+                        backgroundColor: '#FFD700',
+                        yAxisID: 'y'
+                    }, {
+                        label: '利润(万)',
+                        data: [580, 320, 380, 156, 96],
+                        backgroundColor: '#4A90E2',
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    }
+                }
+            });
+            
+            // 门店销售额排名
+            const storeCtx = document.getElementById('storeRankingChart').getContext('2d');
+            new Chart(storeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['上海南京东路店', '北京王府井店', '广州天河店', '深圳万象城店', '成都春熙路店', 
+                            '杭州武林店', '南京新街口店', '武汉楚河汉街店', '重庆解放碑店', '西安钟楼店'],
+                    datasets: [{
+                        label: '销售额(万)',
+                        data: [1200, 980, 750, 680, 620, 580, 520, 480, 420, 370],
+                        backgroundColor: '#4A90E2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    onClick: function(e, elements) {
+                        if (elements && elements.length > 0) {
+                            const index = elements[0].index;
+                            const storeName = this.data.labels[index];
+                            navigateToStore(storeName);
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+            
+            // 月度趋势
+            const trendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '销售额(万)',
+                        data: [620, 680, 710, 690, 720, 750, 780, 820, 790, 810, 850, 880],
+                        borderColor: '#FFD700',
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y',
+                        tension: 0.4
+                    }, {
+                        label: '利润(万)',
+                        data: [95, 110, 125, 118, 130, 142, 155, 168, 158, 165, 178, 186],
+                        borderColor: '#4A90E2',
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y',
+                        tension: 0.4
+                    }, {
+                        label: '毛利率(%)',
+                        data: [42.5, 43.2, 44.1, 43.8, 44.5, 45.2, 45.8, 46.2, 45.9, 46.1, 46.5, 46.8],
+                        borderColor: '#20C997',
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        yAxisID: 'y1',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                            title: {
+                                display: true,
+                                text: '销售额/利润(万)',
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                            title: {
+                                display: true,
+                                text: '毛利率(%)',
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 初始化产品分析图表
+        function initProductCharts() {
+            // 产品大类销售占比
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['黄金', '镶嵌', 'K金', '翡翠', '其他'],
+                    datasets: [{
+                        data: [45, 28, 15, 8, 4],
+                        backgroundColor: ['#FFD700', '#4A90E2', '#FF8C00', '#20C997', '#7952B3']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: function(e, elements) {
+                        if (elements && elements.length > 0) {
+                            const index = elements[0].index;
+                            const category = this.data.labels[index];
+                            filterProductsByCategory(category);
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    }
+                }
+            });
+            
+            // 自有产品vs通用款
+            const typeCtx = document.getElementById('productTypeChart').getContext('2d');
+            new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['自有产品', '通用款产品'],
+                    datasets: [{
+                        label: '销售额(万)',
+                        data: [5200, 3300],
+                        backgroundColor: '#FFD700'
+                    }, {
+                        label: '利润(万)',
+                        data: [1050, 480],
+                        backgroundColor: '#4A90E2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 初始化库存分析图表
+        function initInventoryCharts() {
+            // 库龄结构分布
+            const ageCtx = document.getElementById('inventoryAgeChart').getContext('2d');
+            new Chart(ageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-90天', '90-180天', '180天以上'],
+                    datasets: [{
+                        label: '库存金额(万)',
+                        data: [2800, 850, 420],
+                        backgroundColor: ['#20C997', '#FFC107', '#FF4500']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: function(e, elements) {
+                        if (elements && elements.length > 0) {
+                            const index = elements[0].index;
+                            if (index === 2) { // 180天以上
+                                filterHighRiskInventory();
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+            
+            // 门店库存金额TOP10
+            const storeInvCtx = document.getElementById('storeInventoryChart').getContext('2d');
+            new Chart(storeInvCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['上海南京东路店', '北京王府井店', '广州天河店', '深圳万象城店', '成都春熙路店', '杭州武林店', '南京新街口店', '武汉楚河汉街店', '重庆解放碑店', '西安钟楼店'],
+                    datasets: [{
+                        label: '库存金额(万)',
+                        data: [680, 520, 480, 420, 380, 350, 320, 290, 260, 240],
+                        backgroundColor: '#4A90E2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+        
+        // 筛选函数
+        function filterProductsByCategory(category) {
+            console.log('Filter by category:', category);
+            alert(`已筛选 ${category} 品类产品`);
+        }
+        
+        function filterHighRiskInventory() {
+            console.log('Show high risk inventory');
+            alert('已筛选高风险库存(180天以上)');
+        }
+        
+        // 页面加载时初始化第一个标签的图表
+        document.addEventListener('DOMContentLoaded', function() {
+            initSalesCharts();
+            window.salesChartsInitialized = true;
+        });
+    </script>
+</body>
+</html>

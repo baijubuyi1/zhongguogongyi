@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"content="width=device-width, initial-scale=1.0">
+    <title>框架合同详情 - 贵金属业务数据中台</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 全局样式 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --green-color: #20C997;
+            --border-color: rgba(74, 144, 226, 0.3);
+            --panel-bg: rgba(16, 31, 61, 0.9);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 添加科技感网格效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        .container {
+            padding: 20px;
+            max-width: 100vw;
+            margin: 0 auto;
+            height: auto;
+            min-height: 100vh;
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .breadcrumb-item {
+            color: var(--white-color);
+            opacity: 0.8;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .breadcrumb-item:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 10px;
+            color: var(--light-blue-color);
+            opacity: 0.6;
+        }
+        
+        .breadcrumb-current {
+            color: var(--gold-color);
+            font-weight: bold;
+        }
+        
+        /* 返回按钮 */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: var(--blue-color);
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .back-button:hover {
+            color: var(--gold-color);
+        }
+        
+        .back-button svg {
+            margin-right: 8px;
+        }
+        
+        /* 返回上一级按钮样式 */
+        .back-to-prev {
+            background-color: var(--secondary-bg-color);
+            color: var(--gold-color);
+            border: 1px solid var(--gold-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-to-prev:hover {
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            text-decoration: none;
+        }
+        
+        /* 标题样式 */
+        .page-title {
+            color: var(--gold-color);
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            color: var(--light-gold);
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .contract-id {
+            color: var(--white-color);
+            opacity: 0.8;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .status-danger {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: var(--red-color);
+            border: 1px solid var(--red-color);
+        }
+        
+        .status-warning {
+            background-color: rgba(255, 140, 0, 0.2);
+            color: var(--orange-color);
+            border: 1px solid var(--orange-color);
+        }
+        
+        .status-active {
+            background-color: rgba(32, 201, 151, 0.2);
+            color: var(--green-color);
+            border: 1px solid var(--green-color);
+        }
+        
+        .status-completed {
+            background-color: rgba(74, 144, 226, 0.2);
+            color: var(--blue-color);
+            border: 1px solid var(--blue-color);
+        }
+        
+        /* 基本信息网格 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+            font-size: 0.95rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            color: var(--white-color);
+            opacity: 0.7;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: var(--white-color);
+            font-weight: 600;
+        }
+        
+        /* 流程图样式 */
+        .process-flow {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            position: relative;
+            margin: 30px 0;
+        }
+        
+        .process-flow::before {
+            content: '';
+            position: absolute;
+            top: 50px;
+            left: 5%;
+            right: 5%;
+            height: 4px;
+            background-color: var(--border-color);
+            z-index: 1;
+        }
+        
+        .process-node {
+            position: relative;
+            z-index: 2;
+            width: 22%;
+            text-align: center;
+        }
+        
+        .process-node-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: var(--secondary-bg-color);
+            border: 4px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            transition: all 0.3s;
+        }
+        
+        .process-node.completed .process-node-icon {
+            border-color: var(--green-color);
+            background-color: rgba(32, 201, 151, 0.1);
+        }
+        
+        .process-node.active .process-node-icon {
+            border-color: var(--blue-color);
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+        
+        .process-node.warning .process-node-icon {
+            border-color: var(--orange-color);
+            background-color: rgba(255, 140, 0, 0.1);
+        }
+        
+        .process-node.danger .process-node-icon {
+            border-color: var(--red-color);
+            background-color: rgba(255, 69, 0, 0.1);
+        }
+        
+        .process-node-title {
+            font-weight: 600;
+            color: var(--light-gold);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .process-node-content {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+        
+        .process-node-content strong {
+            color: var(--light-gold);
+        }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .data-table th {
+            background-color: var(--panel-bg);
+            color: var(--gold-color);
+            font-weight: bold;
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: rgba(16, 31, 61, 0.5);
+        }
+        
+        .data-table tr:nth-child(odd) {
+            background-color: rgba(10, 25, 49, 0.3);
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.1);
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+        
+        .order-link {
+            color: var(--blue-color);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .order-link:hover {
+            color: var(--gold-color);
+            text-decoration: underline;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .process-flow {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .process-flow::before {
+                display: none;
+            }
+            
+            .process-node {
+                width: 80%;
+                margin-bottom: 30px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* 跳转链接样式 */
+        .nav-link {
+            color: var(--blue-color);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: var(--gold-color);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-item">首页</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="details.html" class="breadcrumb-item">框架合同管理</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">合同详情</span>
+        </div>
+        
+        <!-- 修改返回按钮文字并关联至details页面 -->
+        <a href="details.html" class="back-to-prev">← 返回上一级</a>
+        
+        <!-- 合同基本信息 -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">框架合同详情</h1>
+                    <p class="contract-id" id="contract-number">合同编号: FK-2025-001</p>
+                </div>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">客户名称:</div>
+                    <div class="info-value" id="customer-name">上海宝玉石科技有限公司</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">合同金额:</div>
+                    <div class="info-value" id="contract-amount">15,000 万元</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">合同总量:</div>
+                    <div class="info-value" id="contract-quantity">250 千克</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">交易品种:</div>
+                    <div class="info-value" id="manager">铂金</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">签订日期:</div>
+                    <div class="info-value" id="sign-date">2025-03-15</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">有效期至:</div>
+                    <div class="info-value" id="expiry-date">2026-03-14</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">负责人:</div>
+                    <div class="info-value" id="manager">张经理</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 框架合同生命周期总览 -->
+        <div class="card fade-in delay-1">
+            <div class="card-header">
+                <h2 class="card-title">框架合同生命周期总览</h2>
+            </div>
+            
+            <div class="process-flow">
+                <div class="process-node completed">
+                    <div class="process-node-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#20C997" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="process-node-title"><a href="交易对手查询.html" class="nav-link">交易对手准入</a></div>
+                    <div class="process-node-content">
+                        <strong>准入评级:</strong> AAA级<br>
+                        <strong>评级日期:</strong> 2024-12-15<br>
+                        <strong>审核状态:</strong> <span style="color: #20C997; font-weight: bold;">已通过</span><br>
+                        <strong>关键文档:</strong> 已归档
+                    </div>
+                </div>
+                
+                <div class="process-node completed">
+                    <div class="process-node-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#20C997" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div class="process-node-title"><a href="contract-detail.html" class="nav-link">框架合同签订</a></div>
+                    <div class="process-node-content">
+                        <strong>合同状态:</strong> <span style="color: #4A90E2; font-weight: bold;">生效中</span><br>
+                        <strong>法务审核:</strong> <span style="color: #20C997; font-weight: bold;">已通过</span><br>
+                        <strong>风控审核:</strong> <span style="color: #20C997; font-weight: bold;">已通过</span><br>
+                        <strong>归档状态:</strong> 已归档
+                    </div>
+                </div>
+                
+                <div class="process-node active">
+                    <div class="process-node-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </div>
+                    <div class="process-node-title">订单执行概览</div>
+                    <div class="process-node-content">
+                        <strong>关联订单总数:</strong> 8<br>
+                        <strong>已完成/执行中:</strong> 5 / 3<br>
+                        <strong>履约进度(额度):</strong> 55.6%<br>
+                        <strong>(8350万/15000万)</strong>
+                    </div>
+                </div>
+                
+                <div class="process-node danger">
+                    <div class="process-node-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF4500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div class="process-node-title">资金状态概览</div>
+                    <div class="process-node-content">
+                        <strong>累计订单总额:</strong> 8,350万<br>
+                        <strong>累计已回款:</strong> 3,350万<br>
+                        <strong>在途待回款:</strong> 5,000万<br>
+                        <strong style="color: #FF4500;">当前逾期金额: 1,800万</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 关联订单列表 -->
+        <div class="card fade-in delay-2">
+            <div class="card-header">
+                <h2 class="card-title">关联订单列表</h2>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>订单类型</th>
+                        <th>订单金额(万)</th>
+                        <th>数量(千克)</th>
+                        <th>下单日期</th>
+                        <th>当前环节</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="order-link" onclick="navigateToOrderDetail('PT-202505-0023')">PT-202505-0023</span></td>
+                        <td>销售订单</td>
+                        <td>2,450</td>
+                        <td>45</td>
+                        <td>2025-05-10</td>
+                        <td>等待回款</td>
+                        <td><span class="status-badge status-warning">付款预警</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-link">PT-202504-0015</span></td>
+                        <td>采购订单</td>
+                        <td>3,100</td>
+                        <td>55</td>
+                        <td>2025-04-08</td>
+                        <td>已完成</td>
+                        <td><span class="status-badge status-completed">正常</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-link">PT-202503-0089</span></td>
+                        <td>加工订单</td>
+                        <td>1,800</td>
+                        <td>30</td>
+                        <td>2025-03-20</td>
+                        <td>已完成</td>
+                        <td><span class="status-badge status-danger">回款逾期</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-link">PT-202503-0056</span></td>
+                        <td>服务订单</td>
+                        <td>1,000</td>
+                        <td>18</td>
+                        <td>2025-03-05</td>
+                        <td>货物出库</td>
+                        <td><span class="status-badge status-active">执行中</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // 获取URL参数
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+        
+        // 合同数据映射
+        const contractData = {
+            'FK-2025-001': {
+                customerName: '上海宝玉石科技有限公司',
+                amount: '15,000 万元',
+                quantity: '250 千克',
+                signDate: '2025-03-15',
+                expiryDate: '2026-03-14',
+                manager: '张经理'
+            },
+            'FK-2025-002': {
+                customerName: '北京金辉贵金属有限公司',
+                amount: '1,850 万元',
+                quantity: '32 千克',
+                signDate: '2025-03-10',
+                expiryDate: '2025-04-05',
+                manager: '李经理'
+            },
+            'FK-2025-003': {
+                customerName: '广州南方贵金属交易所',
+                amount: '8,000 万元',
+                quantity: '150 千克',
+                signDate: '2025-02-28',
+                expiryDate: '2025-08-28',
+                manager: '王经理'
+            },
+            'FK-2025-004': {
+                customerName: '深圳市金鑫珠宝首饰有限公司',
+                amount: '980 万元',
+                quantity: '18 千克',
+                signDate: '2025-02-20',
+                expiryDate: '2025-03-15',
+                manager: '赵经理'
+            },
+            'FK-2025-005': {
+                customerName: '上海黄金交易所',
+                amount: '25,000 万元',
+                quantity: '480 千克',
+                signDate: '2025-02-15',
+                expiryDate: '2026-02-14',
+                manager: '陈经理'
+            },
+            'FK-2025-006': {
+                customerName: '中国工商银行',
+                amount: '18,500 万元',
+                quantity: '320 千克',
+                signDate: '2025-01-20',
+                expiryDate: '2026-01-19',
+                manager: '刘经理'
+            },
+            'FK-2025-007': {
+                customerName: '招商银行',
+                amount: '12,300 万元',
+                quantity: '210 千克',
+                signDate: '2025-01-15',
+                expiryDate: '2025-12-31',
+                manager: '周经理'
+            }
+        };
+        
+        // 页面加载时根据URL参数加载对应合同数据
+        document.addEventListener('DOMContentLoaded', function() {
+            const contractId = getUrlParameter('contract');
+            if (contractId && contractData[contractId]) {
+                loadContractData(contractId);
+            }
+        });
+        
+        // 加载合同数据
+        function loadContractData(contractId) {
+            const data = contractData[contractId];
+            
+            document.getElementById('contract-number').textContent = `合同编号: ${contractId}`;
+            document.getElementById('customer-name').textContent = data.customerName;
+            document.getElementById('contract-amount').textContent = data.amount;
+            document.getElementById('contract-quantity').textContent = data.quantity;
+            document.getElementById('sign-date').textContent = data.signDate;
+            document.getElementById('expiry-date').textContent = data.expiryDate;
+            document.getElementById('manager').textContent = data.manager;
+        }
+        
+        // 导航到订单详情页面
+        function navigateToOrderDetail(orderId) {
+            const contractId = getUrlParameter('contract');
+            window.location.href = `order-detail.html?order=${orderId}&contract=${contractId}`;
+        }
+    </script>
+</body>
+</html>

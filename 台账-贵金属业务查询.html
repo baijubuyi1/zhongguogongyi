@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贵金属业务查询 - 贵金属业务数据可视化系统</title>
+    <style>
+        /* 全局样式 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --border-color: rgba(74, 144, 226, 0.3);
+            --input-bg: rgba(16, 31, 61, 0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 添加科技感网格效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        .container {
+            padding: 30px;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0 auto;
+            height: auto;
+            min-height: 100vh;
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        
+        .breadcrumb-item {
+            color: var(--white-color);
+            opacity: 0.8;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .breadcrumb-item:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 10px;
+            color: var(--light-blue-color);
+            opacity: 0.6;
+        }
+        
+        .breadcrumb-current {
+            color: var(--gold-color);
+            font-weight: bold;
+        }
+        
+        /* 返回按钮样式 */
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--light-blue-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        
+        .back-button:hover {
+            color: var(--gold-color);
+            text-decoration: underline;
+        }
+        
+        /* 页面标题 */
+        .page-title {
+            color: var(--gold-color);
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        /* 查询条件区域 */
+        .search-card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+        
+        .search-title {
+            font-size: 1.2rem;
+            color: var(--light-gold);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-title-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+            color: var(--gold-color);
+        }
+        
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 10px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--light-gold);
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--white-color);
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--gold-color);
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+        }
+        
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 36px;
+        }
+        
+        .range-inputs {
+            display: flex;
+            align-items: center;
+        }
+        
+        .range-inputs .form-control {
+            width: calc(50% - 15px);
+        }
+        
+        .range-separator {
+            margin: 0 10px;
+            color: var(--white-color);
+            opacity: 0.7;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            grid-column: 1 / 5;
+        }
+        
+        .btn {
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            margin-right: 15px;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--gold-alt-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--white-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 台账数据表格 */
+        .data-card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+        
+        .data-title {
+            font-size: 1.2rem;
+            color: var(--light-gold);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .data-count {
+            font-size: 0.9rem;
+            color: var(--white-color);
+            opacity: 0.7;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: fixed; /* 固定表格布局 */
+        }
+        
+        .data-table th {
+            text-align: left;
+            padding: 12px 8px; /* 减小内边距 */
+            background-color: rgba(74, 144, 226, 0.1);
+            color: var(--gold-color);
+            font-weight: 500;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+            white-space: nowrap; /* 防止表头换行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .data-table th:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold-color), transparent);
+            opacity: 0.5;
+        }
+        
+        .data-table td {
+            padding: 12px 8px; /* 减小内边距 */
+            border-bottom: 1px solid var(--border-color);
+            color: var(--white-color);
+            white-space: nowrap; /* 防止单元格内容换行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+        
+        /* 订单编号链接样式 */
+        .order-link {
+            color: var(--light-blue-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .order-link:hover {
+            color: var(--gold-color);
+            text-decoration: underline;
+        }
+        
+        .contract-link {
+            color: var(--light-blue-color);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .contract-link:hover {
+            color: var(--gold-color);
+            text-decoration: underline;
+        }
+        
+        .status-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: rgba(32, 201, 151, 0.2);
+            color: #20C997;
+        }
+        
+        .status-completed {
+            background-color: rgba(74, 144, 226, 0.2);
+            color: #4A90E2;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 140, 0, 0.2);
+            color: #FF8C00;
+        }
+        
+        .status-overdue {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: #FF4500;
+        }
+        
+        /* 分页控件 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+        }
+        
+        .page-info {
+            color: var(--white-color);
+            opacity: 0.7;
+        }
+        
+        .page-controls {
+            display: flex;
+            align-items: center;
+        }
+        
+        .page-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--white-color);
+        }
+        
+        .page-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--gold-color);
+        }
+        
+        .page-btn.active {
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            border-color: var(--gold-color);
+        }
+        
+        .page-btn-arrow {
+            width: 40px;
+        }
+        
+        .page-jump {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+        
+        .page-jump-input {
+            width: 50px;
+            padding: 8px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--white-color);
+            text-align: center;
+            margin: 0 8px;
+        }
+        
+        .page-jump-btn {
+            padding: 7px 12px;
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-jump-btn:hover {
+            background-color: var(--gold-alt-color);
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .search-form {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .button-group {
+                grid-column: 1 / 3;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                grid-column: auto;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .page-jump {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-item">首页</a>
+            <span class="breadcrumb-separator">&gt;</span>
+            <span class="breadcrumb-current">贵金属业务查询</span>
+        </div>
+        
+        <!-- 返回按钮 -->
+        <a href="dashboard.html" class="back-button">← 返回上一级</a>
+        
+        <h1 class="page-title">贵金属业务查询</h1>
+        
+        <!-- 查询条件区域 -->
+        <div class="search-card fade-in">
+            <div class="search-title">
+                <span class="search-title-icon">🔍</span> 查询条件
+            </div>
+            
+            <form class="search-form">
+                <div class="form-group">
+                    <label class="form-label">统计期间</label>
+                    <div class="range-inputs">
+                        <input type="date" class="form-control" value="2025-01-01">
+                        <span class="range-separator">至</span>
+                        <input type="date" class="form-control" value="2025-05-12">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">订单主体</label>
+                    <select class="form-control">
+                        <option value="">全部</option>
+                        <option value="YF">上海有限公司</option>
+                        <option value="BJ">北京有限公司</option>
+                        <option value="GZ">广州有限公司</option>
+                        <option value="SZ">深圳有限公司</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">订单类型</label>
+                    <select class="form-control">
+                        <option value="">全部</option>
+                        <option value="XS">销售订单</option>
+                        <option value="CG">采购订单</option>
+                        <option value="JG">加工订单</option>
+                        <option value="FW">服务订单</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">交易品种</label>
+                    <select class="form-control">
+                        <option value="">全部</option>
+                        <option value="gold">黄金</option>
+                        <option value="platinum">铂金</option>
+                        <option value="palladium">钯金</option>
+                        <option value="other">其他铂族金属</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">订单编号</label>
+                    <input type="text" class="form-control" placeholder="请输入订单编号">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">订单金额（万元）</label>
+                    <div class="range-inputs">
+                        <input type="number" class="form-control" placeholder="最小值">
+                        <span class="range-separator">至</span>
+                        <input type="number" class="form-control" placeholder="最大值">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">订单状态</label>
+                    <select class="form-control">
+                        <option value="">全部</option>
+                        <option value="active">执行中</option>
+                        <option value="completed">已完成</option>
+                        <option value="pending">待确认</option>
+                        <option value="overdue">已逾期</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">交易对手</label>
+                    <select class="form-control">
+                        <option value="">全部</option>
+                        <option value="bank">银行</option>
+                        <option value="jewelry">珠宝商</option>
+                        <option value="industry">工业客户</option>
+                        <option value="investor">投资者</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" class="btn btn-primary" onclick="searchContracts()">查询</button>
+                    <button type="reset" class="btn btn-secondary">重置</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 贵金属业务明细 -->
+        <div class="data-card fade-in delay-1">
+            <div class="data-title">
+                <span>贵金属业务明细</span>
+                <span class="data-count">共 142 条记录</span>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="10%">框架合同编号</th>
+                            <th width="10%">合同名称</th>
+                            <th width="8%">订单编号</th>
+                            <th width="8%">订单名称</th>
+                            <th width="6%">订单类型</th>
+                            <th width="6%">交易品种</th>
+                            <th width="8%">订单主体</th>
+                            <th width="8%">交易对手</th>
+                            <th width="7%">订单金额(万元)</th>
+                            <th width="6%">订单量(kg)</th>
+                            <th width="7%">签订日期</th>
+                            <th width="7%">到期日期</th>
+                            <th width="7%">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202505001" class="contract-link">HT202505001</a></td>
+                            <td>黄金框架采购协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202505001" class="order-link">DD202505001</a></td>
+                            <td>5月黄金采购订单</td>
+                            <td>采购订单</td>
+                            <td>黄金</td>
+                            <td>上海有限公司</td>
+                            <td>工商银行</td>
+                            <td>1,250.00</td>
+                            <td>25.50</td>
+                            <td>2025-03-15</td>
+                            <td>2026-03-14</td>
+                            <td><span class="status-tag status-active">执行中</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202504123" class="contract-link">HT202504123</a></td>
+                            <td>铂金框架销售合同</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202504123" class="order-link">DD202504123</a></td>
+                            <td>4月铂金销售订单</td>
+                            <td>销售订单</td>
+                            <td>铂金</td>
+                            <td>北京有限公司</td>
+                            <td>珠宝集团</td>
+                            <td>865.30</td>
+                            <td>12.30</td>
+                            <td>2025-02-20</td>
+                            <td>2026-02-19</td>
+                            <td><span class="status-tag status-active">执行中</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202504098" class="contract-link">HT202504098</a></td>
+                            <td>白银加工框架协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202504098" class="order-link">DD202504098</a></td>
+                            <td>白银电镀加工订单</td>
+                            <td>加工订单</td>
+                            <td>白银</td>
+                            <td>广州有限公司</td>
+                            <td>电子制造商</td>
+                            <td>325.75</td>
+                            <td>8.20</td>
+                            <td>2025-04-01</td>
+                            <td>2025-07-31</td>
+                            <td><span class="status-tag status-pending">待确认</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202503087" class="contract-link">HT202503087</a></td>
+                            <td>金条存储服务协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202503087" class="order-link">DD202503087</a></td>
+                            <td>金条仓储服务订单</td>
+                            <td>服务订单</td>
+                            <td>黄金</td>
+                            <td>深圳有限公司</td>
+                            <td>投资公司</td>
+                            <td>98.60</td>
+                            <td>50.00</td>
+                            <td>2025-01-10</td>
+                            <td>2025-07-09</td>
+                            <td><span class="status-tag status-overdue">已逾期</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202503052" class="contract-link">HT202503052</a></td>
+                            <td>黄金租赁框架协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202503052" class="order-link">DD202503052</a></td>
+                            <td>黄金租赁归还订单</td>
+                            <td>租赁订单</td>
+                            <td>黄金</td>
+                            <td>上海有限公司</td>
+                            <td>证券公司</td>
+                            <td>762.40</td>
+                            <td>15.80</td>
+                            <td>2025-01-05</td>
+                            <td>2025-04-04</td>
+                            <td><span class="status-tag status-completed">已完成</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202502198" class="contract-link">HT202502198</a></td>
+                            <td>铂金首饰加工协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202502198" class="order-link">DD202502198</a></td>
+                            <td>婚庆铂金加工订单</td>
+                            <td>加工订单</td>
+                            <td>铂金</td>
+                            <td>广州有限公司</td>
+                            <td>珠宝连锁</td>
+                            <td>125.80</td>
+                            <td>3.20</td>
+                            <td>2024-12-15</td>
+                            <td>2025-06-14</td>
+                            <td><span class="status-tag status-active">执行中</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202502156" class="contract-link">HT202502156</a></td>
+                            <td>黄金原料采购合同</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202502156" class="order-link">DD202502156</a></td>
+                            <td>工业用金采购订单</td>
+                            <td>采购订单</td>
+                            <td>黄金</td>
+                            <td>北京有限公司</td>
+                            <td>矿业公司</td>
+                            <td>1,832.60</td>
+                            <td>38.50</td>
+                            <td>2024-11-28</td>
+                            <td>2025-05-27</td>
+                            <td><span class="status-tag status-active">执行中</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202502089" class="contract-link">HT202502089</a></td>
+                            <td>白银销售框架协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202502089" class="order-link">DD202502089</a></td>
+                            <td>光伏用银销售订单</td>
+                            <td>销售订单</td>
+                            <td>白银</td>
+                            <td>深圳有限公司</td>
+                            <td>太阳能企业</td>
+                            <td>563.20</td>
+                            <td>150.00</td>
+                            <td>2024-11-05</td>
+                            <td>2025-05-04</td>
+                            <td><span class="status-tag status-completed">已完成</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202501237" class="contract-link">HT202501237</a></td>
+                            <td>贵金属运输服务合同</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202501237" class="order-link">DD202501237</a></td>
+                            <td>跨境运输服务订单</td>
+                            <td>服务订单</td>
+                            <td>铂族金属</td>
+                            <td>上海有限公司</td>
+                            <td>物流公司</td>
+                            <td>42.30</td>
+                            <td>250.00</td>
+                            <td>2024-10-20</td>
+                            <td>2025-04-19</td>
+                            <td><span class="status-tag status-active">执行中</span></td>
+                        </tr>
+                        <tr>
+                            <td><a href="contract-detail.html?id=HT202501205" class="contract-link">HT202501205</a></td>
+                            <td>铂金原料开发协议</td>
+                            <td><a href="台账-贵金属订单详情.html?id=DD202501205" class="order-link">DD202501205</a></td>
+                            <td>催化剂用铂开发订单</td>
+                            <td>开发订单</td>
+                            <td>铂金</td>
+                            <td>广州有限公司</td>
+                            <td>化工研究院</td>
+                            <td>385.90</td>
+                            <td>8.50</td>
+                            <td>2024-10-10</td>
+                            <td>2025-04-09</td>
+                            <td><span class="status-tag status-overdue">已逾期</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页控件 -->
+            <div class="pagination">
+                <div class="page-info">
+                    显示 1-10，共 142 条
+                </div>
+                
+                <div class="page-controls">
+                    <button class="page-btn page-btn-arrow" disabled="">«</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">4</button>
+                    <button class="page-btn">5</button>
+                    <button class="page-btn page-btn-arrow">»</button>
+                    
+                    <div class="page-jump">
+                        跳至<input type="number" class="page-jump-input" min="1" max="15" value="1">页
+                        <button class="page-jump-btn">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function searchContracts() {
+            // 模拟查询操作
+            console.log('执行贵金属业务查询操作...');
+            
+            // 实际项目中这里会发送AJAX请求到后端进行数据查询
+            
+            // 显示加载中效果
+            const tableBody = document.querySelector('.data-table tbody');
+            tableBody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 30px;">数据加载中...</td></tr>';
+            
+            // 模拟延迟后刷新数据
+            setTimeout(() => {
+                // 重新加载当前页面数据
+                window.location.reload();
+            }, 800);
+        }
+    </script>
+</body>
+</html>

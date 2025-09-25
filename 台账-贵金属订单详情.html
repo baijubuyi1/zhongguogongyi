@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄金采购订单详情 - 贵金属业务数据可视化系统</title>
+    <style>
+        /* 全局样式 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --border-color: rgba(74, 144, 226, 0.3);
+            --panel-bg: rgba(16, 31, 61, 0.9);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 添加科技感网格效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        .container {
+            padding: 30px;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0 auto;
+            height: auto;
+            min-height: 100vh;
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        
+        .breadcrumb-item {
+            color: var(--white-color);
+            opacity: 0.8;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .breadcrumb-item:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 10px;
+            color: var(--light-blue-color);
+            opacity: 0.6;
+        }
+        
+        .breadcrumb-current {
+            color: var(--gold-color);
+            font-weight: bold;
+        }
+        
+        /* 返回按钮样式 */
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--light-blue-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        
+        .back-button:hover {
+            color: var(--gold-color);
+            text-decoration: underline;
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            color: var(--gold-color);
+            font-size: 1.8rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+        }
+        
+        .contract-id {
+            background-color: rgba(255, 215, 0, 0.2);
+            color: var(--gold-color);
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-left: 15px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--gold-alt-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--white-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 合同内容区域 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .detail-card, .side-card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            height: fit-content;
+        }
+        
+        .card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            color: var(--light-gold);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-icon {
+            color: var(--gold-color);
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        /* 合同详情表格 */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .details-table tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .details-table tr:last-child {
+            border-bottom: none;
+        }
+        
+        .details-table th {
+            padding: 12px 15px;
+            text-align: left;
+            width: 30%;
+            color: var(--white-color);
+            opacity: 0.8;
+            font-weight: normal;
+            vertical-align: top;
+        }
+        
+        .details-table td {
+            padding: 12px 15px;
+            color: var(--white-color);
+            font-weight: 500;
+        }
+        
+        .status-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: rgba(32, 201, 151, 0.2);
+            color: #20C997;
+        }
+        
+        .status-completed {
+            background-color: rgba(74, 144, 226, 0.2);
+            color: #4A90E2;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 140, 0, 0.2);
+            color: #FF8C00;
+        }
+        
+        .status-overdue {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: #FF4500;
+        }
+        
+        /* 日期时间线 */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 8px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--gold-color), var(--light-blue-color));
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 25px;
+        }
+        
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: -30px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--gold-color);
+            border: 2px solid var(--main-bg-color);
+        }
+        
+        .timeline-date {
+            font-size: 0.9rem;
+            color: var(--light-gold);
+            margin-bottom: 5px;
+        }
+        
+        .timeline-event {
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-comment {
+            font-size: 0.85rem;
+            color: #B0C4DE;
+            background-color: rgba(74, 144, 226, 0.15);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 5px;
+            border-left: 2px solid var(--light-blue-color);
+        }
+        
+        /* 负责人信息 */
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+        
+        .contact-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--blue-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--white-color);
+        }
+        
+        .contact-details {
+            flex: 1;
+        }
+        
+        .contact-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .contact-role {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .action-buttons {
+                width: 100%;
+            }
+            
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-item">首页</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="#" class="breadcrumb-item">业务数据查询</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="台账-贵金属业务查询.html" class="breadcrumb-item">贵金属业务查询</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current" id="order-id-breadcrumb">DD202502156</span>
+        </div>
+        
+        <!-- 返回按钮 -->
+        <a href="台账-贵金属业务查询.html" class="back-button">← 返回上一级</a>
+        
+        <div class="page-header">
+            <h1 class="page-title">
+                工业用金采购订单
+                <span class="contract-id" id="order-id-display">DD202502156</span>
+            </h1>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    下载订单
+                </button>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <!-- 订单详情 -->
+            <div class="detail-card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📄</span>
+                        订单基本信息
+                    </h2>
+                </div>
+                
+                <div class="card-body">
+                    <table class="details-table">
+                        <tr>
+                            <th>订单名称</th>
+                            <td>工业用金采购订单</td>
+                        </tr>
+                        <tr>
+                            <th>订单编号</th>
+                            <td id="order-id-table">DD202502156</td>
+                        </tr>
+                        <tr>
+                            <th>框架合同编号</th>
+                            <td>HT202502156</td>
+                        </tr>
+                        <tr>
+                            <th>订单类型</th>
+                            <td>采购订单</td>
+                        </tr>
+                        <tr>
+                            <th>订单状态</th>
+                            <td><span class="status-tag status-active">执行中</span></td>
+                        </tr>
+                        <tr>
+                            <th>交易品种</th>
+                            <td>黄金</td>
+                        </tr>
+                        <tr>
+                            <th>订单金额</th>
+                            <td>1,832.60万元</td>
+                        </tr>
+                        <tr>
+                            <th>订单量</th>
+                            <td>38.50kg</td>
+                        </tr>
+                        <tr>
+                            <th>签订日期</th>
+                            <td>2024年11月28日</td>
+                        </tr>
+                        <tr>
+                            <th>生效日期</th>
+                            <td>2024年12月01日</td>
+                        </tr>
+                        <tr>
+                            <th>到期日期</th>
+                            <td>2025年05月27日</td>
+                        </tr>
+                        <tr>
+                            <th>订单主体</th>
+                            <td>北京有限公司</td>
+                        </tr>
+                        <tr>
+                            <th>交易对手</th>
+                            <td>矿业公司</td>
+                        </tr>
+                        <tr>
+                            <th>对方联系人</th>
+                            <td>王经理 (13987654321)</td>
+                        </tr>
+                        <tr>
+                            <th>交货地点</th>
+                            <td>北京市朝阳区工业园区</td>
+                        </tr>
+                        <tr>
+                            <th>主要内容</th>
+                            <td>采购工业用黄金原料，用于电子元器件生产加工。</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 侧边栏信息 -->
+            <div class="side-info">
+                <!-- 订单负责人 -->
+                <div class="side-card fade-in delay-1">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">👤</span>
+                            订单负责人
+                        </h2>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="contact-info">
+                            <div class="contact-avatar">张</div>
+                            <div class="contact-details">
+                                <div class="contact-name">张伟</div>
+                                <div class="contact-role">采购经理</div>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-info">
+                            <div class="contact-avatar">陈</div>
+                            <div class="contact-details">
+                                <div class="contact-name">陈明</div>
+                                <div class="contact-role">法务专员</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 订单时间线 -->
+                <div class="side-card fade-in delay-1" style="margin-top: 25px;">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">📅</span>
+                            订单时间线
+                        </h2>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-date">2024-11-28</div>
+                                <div class="timeline-event">订单签署完成</div>
+                                <div class="timeline-comment">同意签署，条款符合公司利益。 - 张伟</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-date">2024-12-01</div>
+                                <div class="timeline-event">订单正式生效</div>
+                                <div class="timeline-comment">审核通过，无异议。 - 法务部</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-date">2024-12-05</div>
+                                <div class="timeline-event">首笔预付款支付完成</div>
+                                <div class="timeline-comment">付款条件满足，同意支付。 - 财务部</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-date">2024-12-15</div>
+                                <div class="timeline-event">首批黄金原料到货</div>
+                                <div class="timeline-comment">原料质量合格，验收通过。 - 质检部</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-date">2024-12-20</div>
+                                <div class="timeline-event">首笔货款支付完成</div>
+                                <div class="timeline-comment">货物验收合格，同意支付。 - 财务部</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取URL参数
+        function getUrlParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            // 获取订单ID参数
+            const orderId = getUrlParam('id') || 'DD202502156';
+            
+            // 更新页面上的订单ID显示
+            document.getElementById('order-id-breadcrumb').textContent = orderId;
+            document.getElementById('order-id-display').textContent = orderId;
+            document.getElementById('order-id-table').textContent = orderId;
+            
+            // 实际项目中，这里会根据订单ID从后端获取详细信息
+            console.log(`加载订单ID: ${orderId} 的详细信息`);
+        });
+    </script>
+</body>
+</html>

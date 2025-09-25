@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保利工艺大屏可视化系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 全局样式 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --green-color: #20C997;
+            --purple-color: #7952B3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* 添加科技感网格效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: rgba(16, 31, 61, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 8px;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            color: var(--white-color);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            color: var(--gold-color);
+            font-weight: 600;
+            position: relative;
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background-color: var(--gold-color);
+            border-radius: 2px;
+        }
+
+        .dropdown-toggle::after {
+            content: '▼';
+            margin-left: 5px;
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 180px;
+            background-color: var(--secondary-bg-color);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+        }
+
+        .dropdown-item {
+            color: var(--white-color);
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            transition: all 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--gold-color);
+        }
+
+        .nav-item:hover .dropdown-menu {
+            display: block;
+        }
+
+        .nav-item:hover .dropdown-toggle::after {
+            transform: rotate(180deg);
+            content: '▼';
+            margin-left: 5px;
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+            
+        }
+
+        /* 主要内容区 */
+        .main-content {
+            padding: 20px 30px 30px 30px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto auto;
+            gap: 25px;
+        }
+
+        /* 卡片样式 - 用于统一外框样式 */
+        .card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            height: 100%;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+        }
+
+        .card-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .card-title {
+            color: var(--light-gold);
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            color: var(--gold-color);
+        }
+
+        .card-more {
+            color: var(--white-color);
+            opacity: 0.6;
+            transition: opacity 0.3s;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .card-more:hover {
+            opacity: 1;
+        }
+
+        .card-body {
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 特殊区域定义 */
+        .card-large {
+            grid-column: span 2;
+        }
+
+        /* KPI 卡片样式 - 与 index.html 保持一致 */
+        .kpi-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: space-between;
+        }
+
+        .kpi-card {
+            background-color: var(--secondary-bg-color);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            flex: 1;
+            margin: 0 3px 10px 3px;
+            min-width: 140px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 110px;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 12px;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+            z-index: -1;
+            animation: borderGlow 3s infinite alternate;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border-color: var(--gold-color);
+        }
+
+        .kpi-title {
+            font-size: 0.9rem;
+            color: var(--light-gold);
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--gold-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: baseline;
+        }
+
+        .kpi-value .unit {
+            font-size: 0.9rem;
+            margin-left: 5px;
+            color: var(--light-gold);
+        }
+
+        .kpi-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .kpi-change.positive {
+            color: var(--orange-color);
+        }
+
+        .kpi-change.negative {
+            color: var(--red-color);
+        }
+
+        .kpi-change i {
+            margin-right: 3px;
+        }
+
+        /* 业务模块行 - 修改为全宽度 */
+        .business-modules-row {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr; /* 修改为单列布局 */
+            gap: 25px;
+            margin-top: 0;
+            width: 100%;
+        }
+
+        /* 预算模块外框 (样式与 .card 一致) - 统一垂直间距 */
+        .budget-wrapper {
+            grid-column: span 2;
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            margin-top: 0;
+            height: 100%;
+        }
+
+        .budget-wrapper::before {
+             content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+        }
+
+        .budget-wrapper-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+       .budget-wrapper-title {
+            color: var(--light-gold);
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .budget-wrapper-body {
+            padding: 20px;
+            position: relative;
+        }
+
+        .budget-charts-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            width: 100%;
+        }
+
+        .budget-chart-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+       /* 隐藏原来的标题 */
+        .budget-chart-title {
+            display: none;
+        }
+
+        /* 页签样式 */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: rgba(16, 31, 61, 0.5);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background-color: var(--secondary-bg-color);
+            color: var(--gold-color);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .sub-company-section {
+            margin-bottom: 20px;
+        }
+
+        .sub-company-title {
+            font-size: 1rem;
+            color: var(--gold-color);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        /* 动画效果 */
+        @keyframes borderGlow {
+            0% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.6s;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .card-large {
+                grid-column: auto;
+            }
+
+            .business-modules-row,
+            .budget-charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .budget-charts-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 15px;
+                overflow-x: auto;
+            }
+
+            .nav-menu {
+                width: max-content;
+            }
+
+            .main-content {
+                padding: 0 15px 15px 15px;
+            }
+
+            .kpi-container {
+                flex-direction: column;
+            }
+
+            .budget-charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                margin-bottom: 5px;
+            }
+
+            .assessment-table {
+                font-size: 0.75rem;
+            }
+
+            .assessment-table th,
+            .assessment-table td {
+                padding: 6px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .assessment-table {
+                font-size: 0.7rem;
+            }
+
+            .assessment-table th,
+            .assessment-table td {
+                padding: 5px 6px;
+            }
+            
+            .business-modules-row,
+            .budget-charts-container {
+                gap: 15px;
+            }
+        }
+
+        /* 表格容器自适应 */
+        .group-table-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            overflow-x: auto;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .group-table-wrapper {
+            width: 100%;
+        }
+
+        /* 调整表格列宽 */
+        .assessment-table th:nth-child(1),
+        .assessment-table td:nth-child(1) { width: 100px; }
+        .assessment-table th:nth-child(2),
+        .assessment-table td:nth-child(2) { width: 120px; }
+        .assessment-table th:nth-child(3),
+        .assessment-table td:nth-child(3) { width: 60px; }
+        .assessment-table th:nth-child(4),
+        .assessment-table td:nth-child(4) { width: 80px; }
+        .assessment-table th:nth-child(5),
+        .assessment-table td:nth-child(5) { width: 100px; }
+        .assessment-table th:nth-child(6),
+        .assessment-table td:nth-child(6) { width: 100px; }
+        .assessment-table th:nth-child(7),
+        .assessment-table td:nth-child(7) { width: 100px; }
+        .assessment-table th:nth-child(8),
+        .assessment-table td:nth-child(8) { width: 100px; }
+        .assessment-table th:nth-child(9),
+        .assessment-table td:nth-child(9) { width: 100px; }
+
+        /* 箭头样式 */
+        .arrow-up {
+            color: var(--red-color);
+            margin-right: 4px;
+        }
+
+        .arrow-down {
+            color: var(--green-color);
+            margin-right: 4px;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            width: 100%;
+            position: relative;
+        }
+
+        .chart-container-tall {
+            height: 300px;
+        }
+
+        /* 业务分析图表可点击 */
+        .clickable-chart {
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .clickable-chart:hover {
+            transform: scale(1.02);
+        }
+
+        /* 预算饼图容器 - 调整自适应 */
+        .budget-chart-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .budget-chart-container canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 1200px;
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            border: 1px solid var(--asset-primary-color);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            color: var(--asset-primary-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--white-color);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* 表格容器 */
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* 数据表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .data-table th {
+            color: var(--asset-primary-color);
+            font-weight: 500;
+            background-color: rgba(16, 31, 61, 0.5);
+        }
+
+        .data-table td {
+            color: var(--white-color);
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--white-color);
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* 业务模块样式 - 修改为三等分布局 */
+        .business-module {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+            min-height: 350px;
+        }
+
+        .business-left, .business-center, .business-right {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 内容框样式 - 蓝色细实线边框 */
+        .content-box {
+            border: 1px solid var(--blue-color);
+            border-radius: 8px;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 内容框标题区域 */
+        .content-box-header {
+            background-color: rgba(74, 144, 226, 0.1);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--blue-color);
+            border-radius: 7px 7px 0 0;
+        }
+
+        .content-box-title {
+            color: var(--light-gold);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 小角标样式 */
+        .corner-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 3px;
+            vertical-align: middle;
+        }
+
+        /* 内容框内容区域 */
+        .content-box-body {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .business-kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .business-kpi-card {
+            background-color: rgba(16, 31, 61, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+            transition: all 0.3s;
+        }
+
+        .business-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-color: var(--gold-color);
+        }
+
+        .business-kpi-icon {
+            font-size: 20px;
+            color: var(--gold-color);
+            margin-bottom: 8px;
+        }
+
+        .business-kpi-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--white-color);
+            margin-bottom: 4px;
+        }
+
+        .business-kpi-label {
+            font-size: 0.85rem;
+            color: var(--white-color);
+            opacity: 0.8;
+        }
+
+        .business-kpi-change {
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .business-kpi-change.positive {
+            color: var(--green-color);
+        }
+
+        .business-kpi-change.negative {
+            color: var(--red-color);
+        }
+
+        .business-chart-container {
+            flex: 1;
+            position: relative;
+            min-height: 200px;
+        }
+
+        /* 响应式调整业务模块 */
+        @media (max-width: 1200px) {
+            .business-module {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active">首页面</a>
+            </li>
+            <li class="nav-item">
+                <a href="index.html" class="nav-link dropdown-toggle">贵金属业务</a>
+                <div class="dropdown-menu">
+                    <a href="index.html" class="dropdown-item">贵金属业务</a>
+                    <a href="derivatives.html" class="dropdown-item">金融衍生品</a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-management.html" class="nav-link">资产运营业务</a>
+            </li>
+            <li class="nav-item">
+                <a href="jewelry-retail.html" class="nav-link">珠宝零售&工艺美术</a>
+            </li>
+            <li class="nav-item">
+                <a href="绩效考核.html" class="nav-link dropdown-toggle">绩效考核</a>
+                <div class="dropdown-menu">
+                    <a href="绩效考核.html" class="dropdown-item">保利工艺考核</a>
+                    <a href="事业部子&公司考核.html" class="dropdown-item">事业部&子公司考核</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link dropdown-toggle">统计查询 </a>
+                <div class="dropdown-menu">
+                    <a href="contract-list.html" class="dropdown-item">合同查询</a>
+                    <a href="交易对手查询.html" class="dropdown-item">交易对手查询</a>
+                    <a href="台账-贵金属业务查询.html" class="dropdown-item">贵金属业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">铬矿业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">资产运营业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">国际业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">库存查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">应收查询</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="统计报表.html" class="nav-link">数据上报</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- 主要内容区 -->
+    <div class="main-content">
+        <!-- 业务核心指标 -->
+        <div class="card card-large fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="card-icon">📊</span>
+                    保利工艺核心指标
+                </h2>
+                <span class="card-more">⋮</span>
+            </div>
+            <div class="card-body">
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <div class="kpi-title">利润总额 (万元)</div>
+                        <div class="kpi-value">
+                            <span class="counter" data-target="8526">0</span>
+                        </div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 同比 +12.3%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">营业收入 (亿元)</div>
+                        <div class="kpi-value">
+                            <span class="counter" data-target="156.8">0</span>
+                        </div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 同比 +8.9%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">资产负债率</div>
+                        <div class="kpi-value">
+                            45.2<span class="unit">%</span>
+                        </div>
+                        <div class="kpi-change negative">
+                            <i>▼</i> 同比 -2.1%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">净资产收益率</div>
+                        <div class="kpi-value">
+                            18.6<span class="unit">%</span>
+                        </div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 同比 +3.2%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">研发经费投入强度</div>
+                        <div class="kpi-value">
+                            3.8<span class="unit">%</span>
+                        </div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 同比 +0.6%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">营业收现率</div>
+                        <div class="kpi-value">
+                            92.1<span class="unit">%</span>
+                        </div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 同比 +2.3%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预算完成率 -->
+        <div class="budget-wrapper fade-in delay-1">
+             <div class="budget-wrapper-header">
+                <h2 class="budget-wrapper-title">
+                    <span class="card-icon">📈</span>
+                    预算完成率
+                </h2>
+                <span class="card-more">⋮</span>
+            </div>
+            <div class="budget-wrapper-body">
+                <div class="budget-charts-container">
+                    <!-- 整体预算完成率 79% -->
+                    <div class="budget-chart-item">
+                        <div class="budget-chart-container">
+                            <canvas id="overallBudgetChart" class="clickable-chart" data-type="overall"></canvas>
+                        </div>
+                        <div class="budget-chart-title">整体预算完成率</div>
+                    </div>
+                    <!-- 贵金属业务预算完成率 85% -->
+                    <div class="budget-chart-item">
+                        <div class="budget-chart-container">
+                            <canvas id="preciousBudgetChart" class="clickable-chart" data-type="precious"></canvas>
+                        </div>
+                        <div class="budget-chart-title">贵金属业务预算完成率</div>
+                    </div>
+                    <!-- 资产运营业务预算完成率 72% -->
+                    <div class="budget-chart-item">
+                        <div class="budget-chart-container">
+                            <canvas id="assetBudgetChart" class="clickable-chart" data-type="asset"></canvas>
+                        </div>
+                        <div class="budget-chart-title">资产运营业务预算完成率</div>
+                    </div>
+                    <!-- 珠宝零售预算完成率 80% -->
+                    <div class="budget-chart-item">
+                        <div class="budget-chart-container">
+                            <canvas id="jewelryBudgetChart" class="clickable-chart" data-type="jewelry"></canvas>
+                        </div>
+                        <div class="budget-chart-title">珠宝零售业务预算完成率</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 业务模块行 - 修改为全宽度布局 -->
+        <div class="business-modules-row">
+            <!-- 贵金属业务模块 -->
+            <div class="card fade-in delay-1">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">💰</span>
+                        贵金属业务
+                    </h2>
+                    <span class="card-more">⋮</span>
+                </div>
+                <div class="card-body">
+                    <div class="business-module">
+                        <!-- 左侧：核心指标 -->
+                        <div class="business-left">
+                            <div class="content-box">
+                                <div class="content-box-header">
+                                    <h3 class="content-box-title"><span class="corner-badge">核</span> 核心指标</h3>
+                                </div>
+                                <div class="content-box-body">
+                                    <div class="business-kpi-grid">
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">📈</div>
+                                            <div class="business-kpi-value">18.6%</div>
+                                            <div class="business-kpi-label">毛利率</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +1.2%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">📈</div>
+                                            <div class="business-kpi-value">¥15.2亿</div>
+                                            <div class="business-kpi-label">应收总额</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +3.5%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">📊</div>
+                                            <div class="business-kpi-value">¥85.6亿</div>
+                                            <div class="business-kpi-label">收入总额</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +12.1%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">⚖️</div>
+                                            <div class="business-kpi-value">1,250吨</div>
+                                            <div class="business-kpi-label">交易总量</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +8.7%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">💰</div>
+                                            <div class="business-kpi-value">¥3.2亿</div>
+                                            <div class="business-kpi-label">利润总额</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +12.5%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">🥇</div>
+                                            <div class="business-kpi-value">850吨</div>
+                                            <div class="business-kpi-label">金的销售量</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +9.2%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 中间：毛利率趋势分析 -->
+                        <div class="business-center">
+                            <div class="content-box">
+                                <div class="content-box-header">
+                                    <h3 class="content-box-title"><span class="corner-badge">趋</span> 毛利率趋势分析</h3>
+                                </div>
+                                <div class="content-box-body">
+                                    <div class="business-chart-container">
+                                        <canvas id="preciousGrossMarginChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：贵金属毛利构成 -->
+                        <div class="business-right">
+                            <div class="content-box">
+                                <div class="content-box-header">
+                                    <h3 class="content-box-title"><span class="corner-badge">构</span> 贵金属毛利构成</h3>
+                                </div>
+                                <div class="content-box-body">
+                                    <div class="business-chart-container">
+                                        <canvas id="preciousGrossProfitChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 资产经营业务模块 -->
+            <div class="card fade-in delay-1">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">🏢</span>
+                        资产经营业务
+                    </h2>
+                    <span class="card-more">⋮</span>
+                </div>
+                <div class="card-body">
+                    <div class="business-module">
+                        <!-- 左侧：核心指标 -->
+                        <div class="business-left">
+                            <div class="content-box">
+                                <div class="content-box-header">
+                                    <h3 class="content-box-title"><span class="corner-badge">核</span> 核心指标</h3>
+                                </div>
+                                <div class="content-box-body">
+                                    <div class="business-kpi-grid">
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">🏠</div>
+                                            <div class="business-kpi-value">92.3%</div>
+                                            <div class="business-kpi-label">出租率</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +1.5%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">💳</div>
+                                            <div class="business-kpi-value">98.2%</div>
+                                            <div class="business-kpi-label">租金收缴率</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +0.8%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">🎯</div>
+                                            <div class="business-kpi-value">95.6%</div>
+                                            <div class="business-kpi-label">租金达成率</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +2.3%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">📈</div>
+                                            <div class="business-kpi-value">¥8.9亿</div>
+                                            <div class="business-kpi-label">应收总额</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +5.7%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">🏢</div>
+                                            <div class="business-kpi-value">12.5万㎡</div>
+                                            <div class="business-kpi-label">出租面积</div>
+                                            <div class="business-kpi-change positive">
+                                                <i>▲</i> 同比 +3.2%
+                                            </div>
+                                        </div>
+                                        <div class="business-kpi-card">
+                                            <div class="business-kpi-icon">📉</div>
+                                            <div class="business-kpi-value">7.8%</div>
+                                            <div class="business-kpi-label">空置率</div>
+                                            <div class="business-kpi-change negative">
+                                                <i>▼</i> 同比 -1.4%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 中间：公司毛利贡献构成 -->
+                        <div class="business-center">
+                            <div class="content-box">
+                                <div class="content-box-header">
+                                    <h3 class="content-box-title"><span class="corner-badge">贡</span> 公司毛利贡献构成</h3>
+                                </div>
+                                <div class="content-box-body">
+                                    <div class="business-chart-container">
+                                        <canvas id="assetCompanyContributionChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：资产类型收入构成（柱形图） -->
+                        <div class="business-right">
+                            <div class="content-box">
+                                <div class="content-box-header">
+                                    <h3 class="content-box-title"><span class="corner-badge">收</span> 资产类型收入构成</h3>
+                                </div>
+                                <div class="content-box-body">
+                                    <div class="business-chart-container">
+                                        <canvas id="assetTypeIncomeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 保利工艺考核指标 -->
+        <div class="card card-large fade-in delay-2">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="card-icon">🎯</span>
+                    保利工艺考核指标
+                </h2>
+                <span class="card-more">⋮</span>
+            </div>
+            <div class="card-body chart-container-tall">
+                <div class="group-table-container">
+                    <div class="group-table-wrapper">
+                        <table class="data-table" id="assessmentTable">
+                            <tr>
+                                <th>维度</th>
+                                <th>指标名称</th>
+                                <th>单位</th>
+                                <th>目标值</th>
+                                <th>四季度</th>
+                                <th>完成度</th>
+                            </tr>
+                            <tr>
+                                <td rowspan="3">经营效率</td>
+                                <td>营业收入利润率</td>
+                                <td>%</td>
+                                <td>13.8</td>
+                                <td>14.1</td>
+                                <td>102.3%</td>
+                            </tr>
+                            <tr>
+                                <td>营业利润</td>
+                                <td>万元</td>
+                                <td>9,000</td>
+                                <td>9,200</td>
+                                <td>103.2%</td>
+                            </tr>
+                            <tr>
+                                <td>营业总收入</td>
+                                <td>万元</td>
+                                <td>74,000</td>
+                                <td>75,000</td>
+                                <td>101.5%</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="3">风险管控</td>
+                                <td>营业收现率</td>
+                                <td>%</td>
+                                <td>92.0</td>
+                                <td>93.2</td>
+                                <td>105.8%</td>
+                            </tr>
+                            <tr>
+                                <td>经营活动现金流入</td>
+                                <td>万元</td>
+                                <td>68,000</td>
+                                <td>67,000</td>
+                                <td>103.4%</td>
+                            </tr>
+                            <tr>
+                                <td>营业收入</td>
+                                <td>万元</td>
+                                <td>70,000</td>
+                                <td>72,000</td>
+                                <td>102.1%</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="5">经营效益</td>
+                                <td>利润总额</td>
+                                <td>万元</td>
+                                <td>9,000</td>
+                                <td>8,900</td>
+                                <td>104.6%</td>
+                            </tr>
+                            <tr>
+                                <td>EVA</td>
+                                <td>/</td>
+                                <td>1,350</td>
+                                <td>1,320</td>
+                                <td>98.2%</td>
+                            </tr>
+                            <tr>
+                                <td>资本收益率</td>
+                                <td>%</td>
+                                <td>16.2</td>
+                                <td>17.1</td>
+                                <td>105.8%</td>
+                            </tr>
+                            <tr>
+                                <td>净利润</td>
+                                <td>万元</td>
+                                <td>7,200</td>
+                                <td>7,500</td>
+                                <td>103.8%</td>
+                            </tr>
+                            <tr>
+                                <td>实收资本</td>
+                                <td>万元</td>
+                                <td>45,000</td>
+                                <td>45,000</td>
+                                <td>100.0%</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">创新引领</td>
+                                <td>战新产业收入</td>
+                                <td>亿元</td>
+                                <td>16.4</td>
+                                <td>15.2</td>
+                                <td>92.5%</td>
+                            </tr>
+                            <tr>
+                                <td>其他铂族金属销售量</td>
+                                <td>吨</td>
+                                <td>1,250</td>
+                                <td>1,350</td>
+                                <td>108.4%</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预算详情弹窗 -->
+    <div id="budgetModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">预算完成情况</div>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>指标</th>
+                                <th>单位</th>
+                                <th>本年预算数</th>
+                                <th>四季度</th>
+                                <th>预算完成率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody">
+                            <!-- 表格内容将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 数字滚动动画
+            function animateCounter(element) {
+                const target = parseFloat(element.getAttribute('data-target'));
+                const increment = target / 100;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        clearInterval(timer);
+                        current = target;
+                    }
+                    
+                    element.textContent = Math.floor(current).toLocaleString();
+                }, 20);
+            }
+
+            // 初始化数字动画
+            const counters = document.querySelectorAll('.counter');
+            counters.forEach(counter => {
+                counter.style.opacity = '0';
+                setTimeout(() => {
+                    counter.style.opacity = '1';
+                    animateCounter(counter);
+                }, 500);
+            });
+
+            // 贵金属业务模块图表
+            // 贵金属品类毛利率趋势分析 - 修改为柱状图
+            const preciousGrossMarginChart = new Chart(document.getElementById('preciousGrossMarginChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'],
+                    datasets: [
+                        {
+                            label: '黄金毛利额(万元)',
+                            data: [1200, 1350, 1180, 1450, 1320, 1250, 1400, 1300, 1350],
+                            backgroundColor: '#FFD700',
+                            borderColor: '#FFD700',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '铂金毛利额(万元)',
+                            data: [650, 780, 720, 890, 760, 820, 780, 850, 800],
+                            backgroundColor: '#00FFFF',
+                            borderColor: '#00FFFF',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '白银毛利额(万元)',
+                            data: [800, 920, 1050, 1180, 950, 880, 980, 1020, 950],
+                            backgroundColor: '#C0C0FF',
+                            borderColor: '#C0C0FF',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '钯金毛利额(万元)',
+                            data: [980, 1050, 920, 1150, 1020, 980, 1100, 1050, 1120],
+                            backgroundColor: '#FF8C00',
+                            borderColor: '#FF8C00',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '其他铂族毛利额(万元)',
+                            data: [420, 480, 450, 520, 480, 500, 550, 480, 520],
+                            backgroundColor: '#8A2BE2',
+                            borderColor: '#8A2BE2',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#FFFFFF',
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '万元';
+                                },
+                                footer: function(tooltipItems) {
+                                    let total = 0;
+                                    tooltipItems.forEach(item => {
+                                        total += item.raw;
+                                    });
+                                    return '总计: ' + total + '万元';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#FFFFFF'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#FFFFFF'
+                            },
+                            title: {
+                                display: true,
+                                text: '毛利额 (万元)',
+                                color: '#FFFFFF'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 贵金属毛利构成饼图
+            const preciousGrossProfitChart = new Chart(document.getElementById('preciousGrossProfitChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['黄金毛利', '铂金毛利', '白银毛利', '钯金毛利', '其他铂族毛利'],
+                    datasets: [{
+                        data: [40, 20, 15, 15, 10],
+                        backgroundColor: ['#FFD700', '#00FFFF', '#C0C0FF', '#FF8C00', '#8A2BE2'],
+                        borderWidth: 2,
+                        borderColor: '#0A1931'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#FFFFFF',
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 资产经营业务模块图表
+            // 各公司毛利贡献构成
+            const assetCompanyContributionChart = new Chart(document.getElementById('assetCompanyContributionChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['中艺总', '上海公司', '中工美'],
+                    datasets: [{
+                        data: [45, 35, 20],
+                        backgroundColor: ['#FFD700', '#4A90E2', '#FF8C00'],
+                        borderWidth: 2,
+                        borderColor: '#0A1931'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#FFFFFF',
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 各资产类型收入构成 - 修改为柱形图
+            const assetTypeIncomeChart = new Chart(document.getElementById('assetTypeIncomeChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['写字楼', '商业零售', '产业园区', '长租公寓'],
+                    datasets: [{
+                        label: '收入金额',
+                        data: [15.5, 8.2, 4.8, 3.1], // 单位：亿元
+                        backgroundColor: ['#FFD700', '#4A90E2', '#FF8C00', '#20C997'],
+                        borderColor: ['#FFD700', '#4A90E2', '#FF8C00', '#20C997'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} 亿元`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#FFFFFF'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#FFFFFF'
+                            },
+                            title: {
+                                display: true,
+                                text: '金额 (亿元)',
+                                color: '#FFFFFF'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- 预算执行率饼图 ---
+            // 存储预算图表数据
+            const budgetChartData = {
+                overall: {
+                    percentage: 79,
+                    totalBudget: 2000,
+                    executedBudget: 1580,
+                    title: '整体预算完成率',
+                    data: [
+                        { id: 1, indicator: '营业收入', unit: '万元', budget: 200000, q4: 50000, completion: '100%' },
+                        { id: 2, indicator: '营业利润', unit: '万元', budget: 19000, q4: 5000, completion: '100%' },
+                        { id: 3, indicator: '净利润', unit: '万元', budget: 15800, q4: 4000, completion: '100%' },
+                        { id: 4, indicator: '成本费用', unit: '万元', budget: 181000, q4: 45800, completion: '100%' },
+                        { id: 5, indicator: '研发投入', unit: '万元', budget: 7600, q4: 1900, completion: '100%' }
+                    ]
+                },
+                precious: {
+                    percentage: 85,
+                    totalBudget: 1000,
+                    executedBudget: 850,
+                    title: '贵金属业务',
+                    data: [
+                        { id: 1, indicator: '营业收入', unit: '万元', budget: 100000, q4: 25000, completion: '100%' },
+                        { id: 2, indicator: '营业利润', unit: '万元', budget: 9500, q4: 2500, completion: '100%' },
+                        { id: 3, indicator: '净利润', unit: '万元', budget: 7950, q4: 2050, completion: '100%' },
+                        { id: 4, indicator: '成本费用', unit: '万元', budget: 90500, q4: 22650, completion: '100%' },
+                        { id: 5, indicator: '研发投入', unit: '万元', budget: 3800, q4: 950, completion: '100%' }
+                    ]
+                },
+                asset: {
+                    percentage: 72,
+                    totalBudget: 300,
+                    executedBudget: 216,
+                    title: '资产运营业务',
+                    data: [
+                        { id: 1, indicator: '营业收入', unit: '万元', budget: 30000, q4: 7500, completion: '100%' },
+                        { id: 2, indicator: '营业利润', unit: '万元', budget: 2850, q4: 750, completion: '100%' },
+                        { id: 3, indicator: '净利润', unit: '万元', budget: 2385, q4: 615, completion: '100%' },
+                        { id: 4, indicator: '成本费用', unit: '万元', budget: 27150, q4: 6840, completion: '100%' },
+                        { id: 5, indicator: '研发投入', unit: '万元', budget: 1140, q4: 285, completion: '100%' }
+                    ]
+                },
+                jewelry: {
+                    percentage: 80,
+                    totalBudget: 200,
+                    executedBudget: 160,
+                    title: '珠宝零售业务',
+                    data: [
+                        { id: 1, indicator: '营业收入', unit: '万元', budget: 20000, q4: 5000, completion: '100%' },
+                        { id: 2, indicator: '营业利润', unit: '万元', budget: 1900, q4: 500, completion: '100%' },
+                        { id: 3, indicator: '净利润', unit: '万元', budget: 1580, q4: 400, completion: '100%' },
+                        { id: 4, indicator: '成本费用', unit: '万元', budget: 18100, q4: 4560, completion: '100%' },
+                        { id: 5, indicator: '研发投入', unit: '万元', budget: 760, q4: 190, completion: '100%' }
+                    ]
+                }
+            };
+
+            // 函数：创建预算执行率饼图
+            function createBudgetPieChart(canvasId, completedPercentage, totalBudget, executedBudget, chartTitle) {
+                 const remainingPercentage = 100 - completedPercentage;
+                 const remainingBudget = totalBudget - executedBudget;
+                 const data = {
+                    labels: ['已完成', '未完成'],
+                    datasets: [{
+                        data: [completedPercentage, remainingPercentage],
+                        backgroundColor: [
+                            completedPercentage >= 80 ? '#4CAF50' : (completedPercentage >= 60 ? '#FFC107' : '#F44336'),
+                            'rgba(255, 255, 255, 0.1)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#0A1931'
+                    }]
+                };
+
+               return new Chart(document.getElementById(canvasId), {
+                   type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = '';
+                                        if (context.dataIndex === 0) {
+                                            label = '已完成: ' + context.parsed + '%';
+                                        } else {
+                                            label = '未完成: ' + context.parsed + '%';
+                                        }
+                                        return label;
+                                    },
+                                    afterLabel: function(context) {
+                                        let lines = [];
+                                        lines.push(`年度总预算: ${totalBudget}亿元`);
+                                        if (context.dataIndex === 0) {
+                                            lines.push(`已执行额: ${executedBudget}亿元`);
+                                        } else {
+                                            lines.push(`未执行额: ${remainingBudget}亿元`);
+                                        }
+                                        return lines;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        afterDraw: (chart) => {
+                            const ctx = chart.ctx;
+                            const width = chart.width;
+                            const height = chart.height;
+                            
+                            const percentFontSize = (height / 100).toFixed(2);
+                            ctx.font = percentFontSize + 'em sans-serif';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillStyle = '#FFFFFF';
+                            const percentText = completedPercentage + '%';
+                            const percentX = Math.round((width - ctx.measureText(percentText).width) / 2);
+                            const percentY = height / 2 - 15;
+                            ctx.fillText(percentText, percentX, percentY);
+
+                            const titleFontSize = (height / 180).toFixed(2);
+                            ctx.font = titleFontSize + 'em sans-serif';
+                            ctx.fillStyle = '#FFD700';
+                            let title = '';
+                            switch(canvasId) {
+                                case 'overallBudgetChart': title = '整体预算完成率'; break;
+                                case 'preciousBudgetChart': title = '贵金属业务'; break;
+                                case 'assetBudgetChart': title = '资产运营业务'; break;
+                                case 'jewelryBudgetChart': title = '珠宝零售业务'; break;
+                                default: title = chartTitle;
+                            }
+                            const titleX = Math.round((width - ctx.measureText(title).width) / 2);
+                            const titleY = height / 2 + 15;
+                            ctx.fillText(title, titleX, titleY);
+                        }
+                    }]
+                });
+            }
+
+            // 创建各个预算饼图
+            createBudgetPieChart('overallBudgetChart', 79, 2000, 1580);
+            createBudgetPieChart('preciousBudgetChart', 85, 1000, 850);
+            createBudgetPieChart('assetBudgetChart', 72, 300, 216);
+            createBudgetPieChart('jewelryBudgetChart', 80, 200, 160);
+
+            // 预算图表点击事件
+            document.querySelectorAll('.clickable-chart').forEach(chart => {
+                chart.addEventListener('click', function() {
+                    const chartType = this.getAttribute('data-type');
+                    openBudgetModal(chartType);
+                });
+            });
+
+            // 预算详情弹窗
+            function openBudgetModal(type) {
+                const modal = document.getElementById('budgetModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalTableBody = document.getElementById('modalTableBody');
+                
+                switch(type) {
+                    case 'overall':
+                        modalTitle.textContent = '整体预算完成情况';
+                        break;
+                    case 'precious':
+                        modalTitle.textContent = '贵金属业务预算完成情况';
+                        break;
+                    case 'asset':
+                        modalTitle.textContent = '资产运营业务预算完成情况';
+                        break;
+                    case 'jewelry':
+                        modalTitle.textContent = '珠宝零售业务预算完成情况';
+                        break;
+                }
+                
+                modalTableBody.innerHTML = '';
+                
+                const data = budgetChartData[type].data;
+                
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.indicator}</td>
+                        <td>${item.unit}</td>
+                        <td>${item.budget.toLocaleString()}</td>
+                        <td>${item.q4.toLocaleString()}</td>
+                        <td>
+                            ${item.completion}
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: ${parseInt(item.completion)}%"></div>
+                            </div>
+                        </td>
+                    `;
+                    modalTableBody.appendChild(row);
+                });
+                
+                modal.style.display = 'block';
+            }
+            
+            function closeModal() {
+                document.getElementById('budgetModal').style.display = 'none';
+            }
+            
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            
+            document.getElementById('budgetModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

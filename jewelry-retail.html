@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>珠宝零售业务 - 保利工艺大屏可视化系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 全局样式 - 继承首页风格 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --green-color: #20C997;
+            --purple-color: #7952B3;
+            --border-color: rgba(74, 144, 226, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 科技感网格背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: rgba(16, 31, 61, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 8px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            color: var(--white-color);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            color: var(--gold-color);
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background-color: var(--gold-color);
+            border-radius: 2px;
+        }
+        
+        .dropdown-toggle::after {
+            content: '▼';
+            margin-left: 5px;
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 160px;
+            background-color: var(--secondary-bg-color);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+        }
+        
+        .dropdown-item {
+            color: var(--white-color);
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            transition: all 0.3s;
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--gold-color);
+        }
+        
+        .nav-item:hover .dropdown-menu {
+            display: block;
+        }
+        
+        .nav-item:hover .dropdown-toggle::after {
+            transform: rotate(180deg);
+        }
+        
+        /* 核心KPI横条 */
+        .kpi-banner {
+            background-color: var(--secondary-bg-color);
+            padding: 20px 30px;
+            margin: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .kpi-card {
+            flex: 1;
+            background-color: rgba(16, 31, 61, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(74, 144, 226, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border-color: var(--gold-color);
+        }
+        
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--gold-color);
+            margin-bottom: 8px;
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: var(--white-color);
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-trend {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        .trend-up {
+            color: var(--green-color);
+        }
+        
+        .trend-down {
+            color: var(--red-color);
+        }
+        
+        /* 主要内容区 - 修改为与dashboard一致的网格布局 */
+        .main-content {
+            padding: 0 30px 30px 30px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+        
+        /* 左侧业务板块区域 */
+        .business-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 业务板块卡片 - 修改为与dashboard一致的卡片样式 */
+        .business-card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            height: 100%;
+        }
+        
+        .business-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .business-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+        }
+        
+        .business-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .business-title {
+            color: var(--light-gold);
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .business-icon {
+            color: var(--gold-color);
+        }
+        
+        .business-body {
+            padding: 20px;
+        }
+        
+        .business-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-item {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--gold-color);
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--white-color);
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        
+        /* 图表容器 - 修改为与dashboard一致的高度 */
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+        }
+        
+        /* 右侧区域 */
+        .side-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 地图卡片 - 修改为省份列表展示 */
+        .map-card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .map-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+        }
+        
+        .map-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            margin: -20px -20px 15px -20px;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .map-title {
+            color: var(--light-gold);
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .map-icon {
+            color: var(--gold-color);
+        }
+        
+        /* 省份业务列表 */
+        .province-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100% - 80px);
+        }
+        
+        .province-item {
+            background-color: rgba(16, 31, 61, 0.5);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid var(--blue-color);
+        }
+        
+        .province-item:hover {
+            background-color: rgba(16, 31, 61, 0.8);
+            transform: translateX(5px);
+        }
+        
+        .province-item.mixed {
+            border-left-color: var(--gold-color);
+        }
+        
+        .province-item.franchise-only {
+            border-left-color: var(--orange-color);
+        }
+        
+        .province-name {
+            font-weight: 500;
+            color: var(--light-gold);
+            margin-bottom: 5px;
+        }
+        
+        .province-data {
+            font-size: 0.85rem;
+            color: var(--white-color);
+            opacity: 0.8;
+        }
+        
+        /* 图例 */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        /* 完成率环形进度条 */
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        /* 响应式调整 - 改进自适应效果 */
+        @media (max-width: 1400px) {
+            .business-metrics {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .metric-value {
+                font-size: 1.1rem;
+            }
+            
+            .metric-label {
+                font-size: 0.7rem;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .business-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .kpi-banner {
+                flex-wrap: wrap;
+            }
+            
+            .kpi-card {
+                min-width: 45%;
+                margin-bottom: 10px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .business-metrics {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .province-list {
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .kpi-banner {
+                flex-direction: column;
+            }
+            
+            .navbar {
+                padding: 0 15px;
+                overflow-x: auto;
+            }
+            
+            .nav-menu {
+                width: max-content;
+            }
+            
+            .main-content {
+                padding: 0 15px 15px 15px;
+            }
+            
+            .kpi-banner {
+                margin: 15px 15px;
+            }
+            
+            .business-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .legend {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .province-list {
+                max-height: 250px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .business-metrics {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            
+            .metric-value {
+                font-size: 1rem;
+            }
+            
+            .metric-label {
+                font-size: 0.65rem;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 - 与dashboard页面保持一致 -->
+    <nav class="navbar">
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link">首页面</a>
+            </li>
+            <li class="nav-item">
+                <a href="index.html" class="nav-link dropdown-toggle">贵金属业务</a>
+                <div class="dropdown-menu">
+                    <a href="index.html" class="dropdown-item">贵金属业务</a>
+                    <a href="derivatives.html" class="dropdown-item">金融衍生品</a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-management.html" class="nav-link">资产运营业务</a>
+            </li>
+            <li class="nav-item">
+                <a href="jewelry-retail.html" class="nav-link active">珠宝零售&工艺美术</a>
+            
+            </li>
+            <li class="nav-item">
+                <a href="绩效考核.html" class="nav-link dropdown-toggle">绩效考核</a>
+                <div class="dropdown-menu">
+                    <a href="绩效考核.html" class="dropdown-item">保利工艺考核</a>
+                    <a href="事业部子&公司考核.html" class="dropdown-item">事业部&子公司考核</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link dropdown-toggle">统计查询 </a>
+                <div class="dropdown-menu">
+                    <a href="contract-list.html" class="dropdown-item">合同查询</a>
+                    <a href="交易对手查询.html" class="dropdown-item">交易对手查询</a>
+                    <a href="台账-贵金属业务查询.html" class="dropdown-item">贵金属业务查询</a>
+                    <a href="台账-贵金属业务查询.html" class="dropdown-item">铬矿业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">资产运营业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">国际业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">库存查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">应收查询</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="统计报表.html" class="nav-link">数据上报</a>
+            </li>
+        </ul>
+    </nav>
+    
+    <!-- 核心KPI横条 -->
+    <div class="kpi-banner">
+        <div class="kpi-card" onclick="handleKPIClick('revenue')">
+            <div class="kpi-value">1.25亿</div>
+            <div class="kpi-label">总收入</div>
+            <div class="kpi-trend trend-up">
+                <span>↑</span>
+                <span>+15.2%</span>
+            </div>
+        </div>
+        
+        <div class="kpi-card" onclick="handleKPIClick('profit')">
+            <div class="kpi-value">2,340万</div>
+            <div class="kpi-label">总利润</div>
+            <div class="kpi-trend trend-up">
+                <span>↑</span>
+                <span>+8.9%</span>
+            </div>
+        </div>
+        
+        <div class="kpi-card" onclick="handleKPIClick('completion')">
+            <div class="kpi-value">
+                <svg class="progress-ring" viewBox="0 0 120 120">
+                    <circle class="progress-ring-circle" stroke="#101f3d" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                    <circle class="progress-ring-circle" stroke="#FFD700" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" 
+                        stroke-dasharray="326.73" stroke-dashoffset="104.55"/>
+                    <text x="60" y="65" text-anchor="middle" fill="#FFD700" font-size="24" font-weight="bold">68%</text>
+                </svg>
+            </div>
+            <div class="kpi-label">总收入完成率</div>
+        </div>
+        
+        <div class="kpi-card" onclick="handleKPIClick('efficiency')">
+            <div class="kpi-value">18.5%</div>
+            <div class="kpi-label">费用效率</div>
+            <div class="kpi-trend trend-up">
+                <span>↓</span>
+                <span>-2.1%</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 主要内容区 -->
+    <div class="main-content">
+        <!-- 左侧业务板块 -->
+        <div class="business-section">
+            <!-- 直营业务卡片 -->
+            <div class="business-card" onclick="navigateToDirectBusiness()">
+                <div class="business-header">
+                    <h3 class="business-title">
+                        <span class="business-icon">🏢</span>
+                        直营业务
+                    </h3>
+                    <span style="color: var(--gold-color);">→</span>
+                </div>
+                <div class="business-body">
+                    <div class="business-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">8,500万</div>
+                            <div class="metric-label">总销售额</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">72%</div>
+                            <div class="metric-label">利润贡献</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">12</div>
+                            <div class="metric-label">门店总数</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">708万</div>
+                            <div class="metric-label">店均销售额</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="directSalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 加盟业务卡片 -->
+            <div class="business-card" onclick="navigateToFranchiseBusiness()">
+                <div class="business-header">
+                    <h3 class="business-title">
+                        <span class="business-icon">🤝</span>
+                        加盟业务
+                    </h3>
+                    <span style="color: var(--gold-color);">→</span>
+                </div>
+                <div class="business-body">
+                    <div class="business-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">4,000万</div>
+                            <div class="metric-label">总批发额</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">28%</div>
+                            <div class="metric-label">利润贡献</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">22</div>
+                            <div class="metric-label">合作总代数</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">85%</div>
+                            <div class="metric-label">平均完成率</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="franchiseSalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧区域 -->
+        <div class="side-section">
+            <!-- 全国业务分布 - 改为省份列表 -->
+            <div class="map-card">
+                <div class="map-header">
+                    <h3 class="map-title">
+                        <span class="map-icon">🗺️</span>
+                        全国业务分布
+                    </h3>
+                </div>
+                <div class="province-list">
+                    <div class="province-item mixed" onclick="filterByProvince('北京')">
+                        <div class="province-name">北京市</div>
+                        <div class="province-data">总收入: 2,100万 | 直营: 1,500万 | 加盟: 600万</div>
+                    </div>
+                    <div class="province-item" onclick="filterByProvince('上海')">
+                        <div class="province-name">上海市</div>
+                        <div class="province-data">总收入: 3,200万 | 直营: 3,200万 | 加盟: 0</div>
+                    </div>
+                    <div class="province-item franchise-only" onclick="filterByProvince('浙江')">
+                        <div class="province-name">浙江省</div>
+                        <div class="province-data">总收入: 1,800万 | 直营: 0 | 加盟: 1,800万</div>
+                    </div>
+                    <div class="province-item mixed" onclick="filterByProvince('广东')">
+                        <div class="province-name">广东省</div>
+                        <div class="province-data">总收入: 2,500万 | 直营: 1,800万 | 加盟: 700万</div>
+                    </div>
+                    <div class="province-item" onclick="filterByProvince('四川')">
+                        <div class="province-name">四川省</div>
+                        <div class="province-data">总收入: 1,200万 | 直营: 1,200万 | 加盟: 0</div>
+                    </div>
+                    <div class="province-item mixed" onclick="filterByProvince('江苏')">
+                        <div class="province-name">江苏省</div>
+                        <div class="province-data">总收入: 1,600万 | 直营: 900万 | 加盟: 700万</div>
+                    </div>
+                </div>
+                
+                <!-- 图例 -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--blue-color);"></div>
+                        <span>纯直营业务</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--gold-color);"></div>
+                        <span>混合业务</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--orange-color);"></div>
+                        <span>纯加盟业务</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 初始化图表
+        document.addEventListener('DOMContentLoaded', function() {
+            // 直营业务销售趋势图
+            const directCtx = document.getElementById('directSalesChart').getContext('2d');
+            const directChart = new Chart(directCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '销售额',
+                        data: [620, 680, 710, 690, 720, 750, 780, 820, 790, 810, 850, 880],
+                        borderColor: '#FFD700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '销售额: ' + context.raw + '万元';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 加盟业务批发额趋势图
+            const franchiseCtx = document.getElementById('franchiseSalesChart').getContext('2d');
+            const franchiseChart = new Chart(franchiseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '批发额',
+                        data: [280, 310, 320, 300, 330, 340, 360, 380, 350, 340, 370, 390],
+                        backgroundColor: '#4A90E2',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '批发额: ' + context.raw + '万元';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        
+        // 导航函数
+        function navigateToDirectBusiness() {
+            window.location.href = 'jewelry-direct-business.html';
+        }
+        
+        function navigateToFranchiseBusiness() {
+            window.location.href = 'jewelry-franchise-business.html';
+        }
+        
+        function navigateToStoreDetail(storeName) {
+            window.location.href = `jewelry-store-detail.html?store=${encodeURIComponent(storeName)}`;
+        }
+        
+        function navigateToAgentDetail(agentName) {
+            window.location.href = `jewelry-agent-detail.html?agent=${encodeURIComponent(agentName)}`;
+        }
+        
+        function navigateToProductDetail(productName) {
+            window.location.href = `jewelry-product-detail.html?product=${encodeURIComponent(productName)}`;
+        }
+        
+        // KPI点击处理
+        function handleKPIClick(type) {
+            console.log('KPI clicked:', type);
+            // 这里可以实现图表联动刷新
+            switch(type) {
+                case 'revenue':
+                    alert('显示收入详细分析');
+                    break;
+                case 'profit':
+                    alert('显示利润详细分析');
+                    break;
+                case 'completion':
+                    alert('显示完成率趋势');
+                    break;
+                case 'efficiency':
+                    alert('显示费用效率分析');
+                    break;
+            }
+        }
+        
+        // 省份筛选
+        function filterByProvince(province) {
+            console.log('Filter by province:', province);
+            // 高亮选中的省份
+            document.querySelectorAll('.province-item').forEach(item => {
+                item.style.background = 'rgba(16, 31, 61, 0.5)';
+            });
+            event.currentTarget.style.background = 'rgba(255, 215, 0, 0.2)';
+            
+            // 这里可以实现省份筛选逻辑，更新图表数据
+            alert(`已筛选 ${province} 的业务数据`);
+        }
+    </script>
+</body>
+</html>

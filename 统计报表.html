@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计报表</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 全局样式 - 与首页保持一致 */
+        :root {
+            --main-bg-color: #0A1929;
+            --secondary-bg-color: #101f3d;
+            --asset-primary-color: #00E5FF;
+            --asset-secondary-color: #4D8DFF;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FFA500;
+            --red-color: #FF4D4F;
+            --green-color: #00B894;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Source Han Sans CN', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 科技感网格效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: rgba(16, 31, 61, 0.9);
+            border-bottom: 1px solid var(--asset-primary-color);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0, 229, 255, 0.2);
+        }
+        
+        .breadcrumb {
+            position: absolute;
+            left: 30px;
+            color: var(--white-color);
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .breadcrumb a {
+            color: var(--asset-primary-color);
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            opacity: 0.8;
+        }
+        
+        .nav-title {
+            color: var(--asset-primary-color);
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 8px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            color: var(--white-color);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            color: var(--gold-color);
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background-color: var(--gold-color);
+            border-radius: 2px;
+        }
+        
+        .dropdown-toggle::after {
+            content: '▼';
+            margin-left: 5px;
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 160px;
+            background-color: var(--secondary-bg-color);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+        }
+        
+        .dropdown-item {
+            color: var(--white-color);
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            transition: all 0.3s;
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--gold-color);
+        }
+        
+        .nav-item:hover .dropdown-menu {
+            display: block;
+        }
+        
+        .nav-item:hover .dropdown-toggle::after {
+            transform: rotate(180deg);
+        }
+        
+        /* 返回按钮样式 */
+        .back-button {
+            background-color: var(--secondary-bg-color);
+            color: var(--asset-primary-color);
+            border: 1px solid var(--asset-primary-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 30px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-button:hover {
+            background-color: var(--asset-primary-color);
+            color: var(--main-bg-color);
+            text-decoration: none;
+        }
+        
+        /* 页面容器 */
+        .page-container {
+            display: block;
+            padding: 20px 30px;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--asset-primary-color), var(--asset-secondary-color));
+        }
+        
+        .card-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+        }
+        
+        .card-title {
+            color: var(--white-color);
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-icon {
+            color: var(--asset-primary-color);
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            table-layout: auto;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
+        
+        .data-table th {
+            color: var(--asset-primary-color);
+            font-weight: 500;
+            background-color: rgba(16, 31, 61, 0.5);
+        }
+        
+        .data-table td {
+            color: var(--white-color);
+        }
+        
+        /* 报表选择框样式 */
+        .report-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .report-selector label {
+            font-weight: bold;
+            color: var(--asset-primary-color);
+        }
+        
+        .report-dropdown {
+            padding: 8px 12px;
+            background-color: var(--secondary-bg-color);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 4px;
+            color: var(--white-color);
+            font-size: 14px;
+        }
+        
+        /* 滚动表格容器 */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 4px;
+            max-width: 100%;
+        }
+        
+        .table-wrapper {
+            min-width: 100%;
+        }
+        
+        /* 策略执行情况核查表特殊样式 */
+        #strategy-check-content .data-table {
+            min-width: 4000px;
+        }
+        
+        #strategy-check-content .data-table th,
+        #strategy-check-content .data-table td {
+            width: auto;
+            min-width: 150px;
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+        
+        /* 国资委-商品类业务品种汇总表特殊样式 */
+        #summary-table-content .data-table {
+            min-width: 1500px;
+        }
+        
+        #summary-table-content .data-table th,
+        #summary-table-content .data-table td {
+            width: auto;
+            min-width: 150px;
+            padding: 10px 15px;
+        }
+        
+        #summary-table-content .data-table th:nth-child(6),
+        #summary-table-content .data-table td:nth-child(6) {
+            min-width: 250px;
+        }
+        
+        /* 国资委-衍生品明细表特殊样式 */
+        #detail-table-content .data-table {
+            min-width: 1800px;
+        }
+        
+        #detail-table-content .data-table th,
+        #detail-table-content .data-table td {
+            width: auto;
+            min-width: 150px;
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 15px;
+                flex-direction: column;
+                height: auto;
+                padding-top: 15px;
+                padding-bottom: 15px;
+            }
+            
+            .breadcrumb {
+                position: static;
+                margin-bottom: 10px;
+            }
+            
+            .page-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link">首页面</a>
+            </li>
+            <li class="nav-item">
+                <a href="index.html" class="nav-link dropdown-toggle">贵金属业务</a>
+                <div class="dropdown-menu">
+                    <a href="index.html" class="dropdown-item">贵金属业务</a>
+                    <a href="derivatives.html" class="dropdown-item">金融衍生品</a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-management.html" class="nav-link">资产运营业务</a>
+            </li>
+            <li class="nav-item">
+                <a href="jewelry-retail.html" class="nav-link">珠宝零售&工艺美术</a>
+           </li>
+            <li class="nav-item">
+                <a href="绩效考核.html" class="nav-link dropdown-toggle">绩效考核</a>
+                <div class="dropdown-menu">
+                    <a href="绩效考核.html" class="dropdown-item">保利工艺考核</a>
+                    <a href="事业部子&公司考核.html" class="dropdown-item">事业部&子公司考核</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link dropdown-toggle">统计查询 </a>
+                <div class="dropdown-menu">
+                    <a href="contract-list.html" class="dropdown-item">合同查询</a>
+                    <a href="交易对手查询.html" class="dropdown-item">交易对手查询</a>
+                    <a href="台账-贵金属业务查询.html" class="dropdown-item">贵金属业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">铬矿业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">资产运营业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">国际业务查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">库存查询</a>
+                    <a href="台账-资产运营业务查询.html" class="dropdown-item">应收查询</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link active">数据上报</a>
+            </li>
+        </ul>
+    </nav>
+    
+    <!-- 金融衍生品报表页面 -->
+    <div id="financial-report" class="page-container">
+        <div class="card fade-in-up">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="card-icon">📊</span>
+                    金融衍生品报表
+                </h2>
+            </div>
+            <div class="card-body">
+                <!-- 报表选择框 -->
+                <div class="report-selector">
+                    <label for="report-select">报表名称：</label>
+                    <select id="report-select" class="report-dropdown">
+                        <option value="strategy-check">策略执行情况核查表</option>
+                        <option value="summary-table">国资委-商品类业务品种汇总表</option>
+                        <option value="detail-table">国资委-衍生品明细表</option>
+                    </select>
+                </div>
+                
+                <!-- 策略执行情况核查表 -->
+                <div id="strategy-check-content" class="report-content">
+                    <div class="table-container">
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>机构名称</th>
+                                        <th>部门名称</th>
+                                        <th>策略名称</th>
+                                        <th>策略编码</th>
+                                        <th>策略目的</th>
+                                        <th>考核主体</th>
+                                        <th>风险品种</th>
+                                        <th>单位</th>
+                                        <th>套保比率</th>
+                                        <th>计划名称</th>
+                                        <th>计划编码</th>
+                                        <th>计划套保比率</th>
+                                        <th>现货采购量</th>
+                                        <th>现货采购均价</th>
+                                        <th>采购金额</th>
+                                        <th>现货销售量</th>
+                                        <th>现货销售均价</th>
+                                        <th>销售金额</th>
+                                        <th>购销匹配量（已了结量）</th>
+                                        <th>未了结敞口数量</th>
+                                        <th>开仓方向</th>
+                                        <th>开仓量</th>
+                                        <th>开仓均价</th>
+                                        <th>开仓金额</th>
+                                        <th>平仓量</th>
+                                        <th>平仓均价</th>
+                                        <th>平仓金额</th>
+                                        <th>持仓量</th>
+                                        <th>持仓价格</th>
+                                        <th>持仓金额</th>
+                                        <th>现货实现盈亏</th>
+                                        <th>现货浮动盈亏</th>
+                                        <th>现货浮动盈亏(含偏移量)</th>
+                                        <th>现货费用</th>
+                                        <th>现货总盈亏</th>
+                                        <th>现货总盈亏(含偏移量)</th>
+                                        <th>期货平仓盈亏</th>
+                                        <th>期货持仓盈亏</th>
+                                        <th>期货费用</th>
+                                        <th>期货总盈亏</th>
+                                        <th>期现总盈亏</th>
+                                        <th>期现总盈亏(含偏移量)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>金融衍生品部</td>
+                                        <td>黄金套保策略</td>
+                                        <td>STG001</td>
+                                        <td>规避金价波动风险</td>
+                                        <td>中博世金</td>
+                                        <td>黄金</td>
+                                        <td>吨</td>
+                                        <td>85%</td>
+                                        <td>年度套保计划</td>
+                                        <td>PLAN001</td>
+                                        <td>90%</td>
+                                        <td>1200</td>
+                                        <td>385.5</td>
+                                        <td>462600</td>
+                                        <td>1100</td>
+                                        <td>390.2</td>
+                                        <td>429220</td>
+                                        <td>1050</td>
+                                        <td>50</td>
+                                        <td>买入</td>
+                                        <td>1150</td>
+                                        <td>388.6</td>
+                                        <td>446890</td>
+                                        <td>1000</td>
+                                        <td>392.1</td>
+                                        <td>392100</td>
+                                        <td>150</td>
+                                        <td>388.6</td>
+                                        <td>58290</td>
+                                        <td>12500</td>
+                                        <td>-8500</td>
+                                        <td>-8200</td>
+                                        <td>500</td>
+                                        <td>4200</td>
+                                        <td>4500</td>
+                                        <td>15000</td>
+                                        <td>-5000</td>
+                                        <td>300</td>
+                                        <td>9300</td>
+                                        <td>13500</td>
+                                        <td>13800</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>贵金属业务部</td>
+                                        <td>白银套保策略</td>
+                                        <td>STG002</td>
+                                        <td>规避银价波动风险</td>
+                                        <td>工美进出口</td>
+                                        <td>白银</td>
+                                        <td>吨</td>
+                                        <td>78%</td>
+                                        <td>季度套保计划</td>
+                                        <td>PLAN002</td>
+                                        <td>80%</td>
+                                        <td>800</td>
+                                        <td>4.8</td>
+                                        <td>3840</td>
+                                        <td>750</td>
+                                        <td>5.2</td>
+                                        <td>3900</td>
+                                        <td>700</td>
+                                        <td>50</td>
+                                        <td>卖出</td>
+                                        <td>780</td>
+                                        <td>5.0</td>
+                                        <td>3900</td>
+                                        <td>720</td>
+                                        <td>4.9</td>
+                                        <td>3528</td>
+                                        <td>60</td>
+                                        <td>5.0</td>
+                                        <td>300</td>
+                                        <td>3500</td>
+                                        <td>-1200</td>
+                                        <td>-1150</td>
+                                        <td>200</td>
+                                        <td>2500</td>
+                                        <td>2550</td>
+                                        <td>-2000</td>
+                                        <td>800</td>
+                                        <td>150</td>
+                                        <td>-1050</td>
+                                        <td>1450</td>
+                                        <td>1500</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>风险管理部</td>
+                                        <td>铂金套保策略</td>
+                                        <td>STG003</td>
+                                        <td>规避铂价波动风险</td>
+                                        <td>美泰乐</td>
+                                        <td>铂金</td>
+                                        <td>公斤</td>
+                                        <td>92%</td>
+                                        <td>月度套保计划</td>
+                                        <td>PLAN003</td>
+                                        <td>95%</td>
+                                        <td>5000</td>
+                                        <td>220.5</td>
+                                        <td>1102500</td>
+                                        <td>4800</td>
+                                        <td>225.8</td>
+                                        <td>1083840</td>
+                                        <td>4700</td>
+                                        <td>100</td>
+                                        <td>买入</td>
+                                        <td>4900</td>
+                                        <td>223.2</td>
+                                        <td>1093680</td>
+                                        <td>4750</td>
+                                        <td>224.5</td>
+                                        <td>1066375</td>
+                                        <td>150</td>
+                                        <td>223.2</td>
+                                        <td>33480</td>
+                                        <td>-15000</td>
+                                        <td>8500</td>
+                                        <td>8700</td>
+                                        <td>300</td>
+                                        <td>-6200</td>
+                                        <td>-6000</td>
+                                        <td>25000</td>
+                                        <td>-12000</td>
+                                        <td>500</td>
+                                        <td>13500</td>
+                                        <td>7300</td>
+                                        <td>8000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>金融衍生品部</td>
+                                        <td>钯金套保策略</td>
+                                        <td>STG004</td>
+                                        <td>规避钯价波动风险</td>
+                                        <td>中博世金</td>
+                                        <td>钯金</td>
+                                        <td>公斤</td>
+                                        <td>88%</td>
+                                        <td>年度套保计划</td>
+                                        <td>PLAN004</td>
+                                        <td>90%</td>
+                                        <td>3200</td>
+                                        <td>310.2</td>
+                                        <td>992640</td>
+                                        <td>3000</td>
+                                        <td>315.8</td>
+                                        <td>947400</td>
+                                        <td>2900</td>
+                                        <td>100</td>
+                                        <td>卖出</td>
+                                        <td>3100</td>
+                                        <td>312.5</td>
+                                        <td>968750</td>
+                                        <td>2950</td>
+                                        <td>314.2</td>
+                                        <td>926890</td>
+                                        <td>150</td>
+                                        <td>312.5</td>
+                                        <td>46875</td>
+                                        <td>8500</td>
+                                        <td>-12000</td>
+                                        <td>-11800</td>
+                                        <td>400</td>
+                                        <td>-3100</td>
+                                        <td>-2900</td>
+                                        <td>18000</td>
+                                        <td>-8000</td>
+                                        <td>600</td>
+                                        <td>10600</td>
+                                        <td>7500</td>
+                                        <td>7700</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>贵金属业务部</td>
+                                        <td>铑金套保策略</td>
+                                        <td>STG005</td>
+                                        <td>规避铑价波动风险</td>
+                                        <td>工美进出口</td>
+                                        <td>铑金</td>
+                                        <td>公斤</td>
+                                        <td>95%</td>
+                                        <td>季度套保计划</td>
+                                        <td>PLAN005</td>
+                                        <td>98%</td>
+                                        <td>1500</td>
+                                        <td>1250.5</td>
+                                        <td>1875750</td>
+                                        <td>1400</td>
+                                        <td>1280.2</td>
+                                        <td>1792280</td>
+                                        <td>1350</td>
+                                        <td>50</td>
+                                        <td>买入</td>
+                                        <td>1450</td>
+                                        <td>1265.8</td>
+                                        <td>1835410</td>
+                                        <td>1380</td>
+                                        <td>1272.1</td>
+                                        <td>1755498</td>
+                                        <td>70</td>
+                                        <td>1265.8</td>
+                                        <td>88606</td>
+                                        <td>25000</td>
+                                        <td>-18000</td>
+                                        <td>-17500</td>
+                                        <td>800</td>
+                                        <td>7500</td>
+                                        <td>8000</td>
+                                        <td>32000</td>
+                                        <td>-15000</td>
+                                        <td>1200</td>
+                                        <td>18200</td>
+                                        <td>25700</td>
+                                        <td>26200</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>风险管理部</td>
+                                        <td>铱金套保策略</td>
+                                        <td>STG006</td>
+                                        <td>规避铱价波动风险</td>
+                                        <td>美泰乐</td>
+                                        <td>铱金</td>
+                                        <td>公斤</td>
+                                        <td>82%</td>
+                                        <td>月度套保计划</td>
+                                        <td>PLAN006</td>
+                                        <td>85%</td>
+                                        <td>2800</td>
+                                        <td>850.3</td>
+                                        <td>2380840</td>
+                                        <td>2600</td>
+                                        <td>875.6</td>
+                                        <td>2276560</td>
+                                        <td>2500</td>
+                                        <td>100</td>
+                                        <td>卖出</td>
+                                        <td>2700</td>
+                                        <td>862.9</td>
+                                        <td>2329830</td>
+                                        <td>2550</td>
+                                        <td>868.2</td>
+                                        <td>2213910</td>
+                                        <td>150</td>
+                                        <td>862.9</td>
+                                        <td>129435</td>
+                                        <td>-12000</td>
+                                        <td>9500</td>
+                                        <td>9800</td>
+                                        <td>500</td>
+                                        <td>-2000</td>
+                                        <td>-1700</td>
+                                        <td>28000</td>
+                                        <td>-14000</td>
+                                        <td>900</td>
+                                        <td>14900</td>
+                                        <td>12900</td>
+                                        <td>13200</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>金融衍生品部</td>
+                                        <td>钌金套保策略</td>
+                                        <td>STG007</td>
+                                        <td>规避钌价波动风险</td>
+                                        <td>中博世金</td>
+                                        <td>钌金</td>
+                                        <td>公斤</td>
+                                        <td>79%</td>
+                                        <td>年度套保计划</td>
+                                        <td>PLAN007</td>
+                                        <td>82%</td>
+                                        <td>4200</td>
+                                        <td>420.8</td>
+                                        <td>1767360</td>
+                                        <td>4000</td>
+                                        <td>435.2</td>
+                                        <td>1740800</td>
+                                        <td>3900</td>
+                                        <td>100</td>
+                                        <td>买入</td>
+                                        <td>4100</td>
+                                        <td>428.0</td>
+                                        <td>1754800</td>
+                                        <td>3950</td>
+                                        <td>431.5</td>
+                                        <td>1704425</td>
+                                        <td>150</td>
+                                        <td>428.0</td>
+                                        <td>64200</td>
+                                        <td>18000</td>
+                                        <td>-15000</td>
+                                        <td>-14500</td>
+                                        <td>600</td>
+                                        <td>3600</td>
+                                        <td>4100</td>
+                                        <td>22000</td>
+                                        <td>-11000</td>
+                                        <td>700</td>
+                                        <td>11700</td>
+                                        <td>15300</td>
+                                        <td>15800</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>贵金属业务部</td>
+                                        <td>锇金套保策略</td>
+                                        <td>STG008</td>
+                                        <td>规避锇价波动风险</td>
+                                        <td>工美进出口</td>
+                                        <td>锇金</td>
+                                        <td>公斤</td>
+                                        <td>87%</td>
+                                        <td>季度套保计划</td>
+                                        <td>PLAN008</td>
+                                        <td>90%</td>
+                                        <td>1800</td>
+                                        <td>650.4</td>
+                                        <td>1170720</td>
+                                        <td>1700</td>
+                                        <td>675.8</td>
+                                        <td>1148860</td>
+                                        <td>1650</td>
+                                        <td>50</td>
+                                        <td>卖出</td>
+                                        <td>1750</td>
+                                        <td>663.1</td>
+                                        <td>1160425</td>
+                                        <td>1680</td>
+                                        <td>668.5</td>
+                                        <td>1123080</td>
+                                        <td>70</td>
+                                        <td>663.1</td>
+                                        <td>46417</td>
+                                        <td>12000</td>
+                                        <td>-9500</td>
+                                        <td>-9200</td>
+                                        <td>400</td>
+                                        <td>2900</td>
+                                        <td>3200</td>
+                                        <td>18000</td>
+                                        <td>-8500</td>
+                                        <td>600</td>
+                                        <td>10100</td>
+                                        <td>13000</td>
+                                        <td>13300</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>风险管理部</td>
+                                        <td>铼金套保策略</td>
+                                        <td>STG009</td>
+                                        <td>规避铼价波动风险</td>
+                                        <td>美泰乐</td>
+                                        <td>铼金</td>
+                                        <td>公斤</td>
+                                        <td>91%</td>
+                                        <td>月度套保计划</td>
+                                        <td>PLAN009</td>
+                                        <td>93%</td>
+                                        <td>3500</td>
+                                        <td>280.6</td>
+                                        <td>982100</td>
+                                        <td>3300</td>
+                                        <td>290.3</td>
+                                        <td>957990</td>
+                                        <td>3200</td>
+                                        <td>100</td>
+                                        <td>买入</td>
+                                        <td>3400</td>
+                                        <td>285.4</td>
+                                        <td>970360</td>
+                                        <td>3250</td>
+                                        <td>288.7</td>
+                                        <td>938275</td>
+                                        <td>150</td>
+                                        <td>285.4</td>
+                                        <td>42810</td>
+                                        <td>-18000</td>
+                                        <td>14500</td>
+                                        <td>14800</td>
+                                        <td>700</td>
+                                        <td>-2800</td>
+                                        <td>-2500</td>
+                                        <td>24000</td>
+                                        <td>-12000</td>
+                                        <td>800</td>
+                                        <td>12800</td>
+                                        <td>10000</td>
+                                        <td>10300</td>
+                                    </tr>
+                                    <tr>
+                                        <td>保利工艺集团</td>
+                                        <td>金融衍生品部</td>
+                                        <td>锇铱合金套保策略</td>
+                                        <td>STG010</td>
+                                        <td>规避锇铱合金价格波动风险</td>
+                                        <td>中博世金</td>
+                                        <td>锇铱合金</td>
+                                        <td>公斤</td>
+                                        <td>83%</td>
+                                        <td>年度套保计划</td>
+                                        <td>PLAN010</td>
+                                        <td>85%</td>
+                                        <td>2200</td>
+                                        <td>1450.7</td>
+                                        <td>3191540</td>
+                                        <td>2100</td>
+                                        <td>1480.3</td>
+                                        <td>3108630</td>
+                                        <td>2050</td>
+                                        <td>50</td>
+                                        <td>卖出</td>
+                                        <td>2150</td>
+                                        <td>1465.5</td>
+                                        <td>3150825</td>
+                                        <td>2080</td>
+                                        <td>1472.8</td>
+                                        <td>3063424</td>
+                                        <td>70</td>
+                                        <td>1465.5</td>
+                                        <td>102585</td>
+                                        <td>22000</td>
+                                        <td>-17500</td>
+                                        <td>-17000</td>
+                                        <td>900</td>
+                                        <td>5400</td>
+                                        <td>5900</td>
+                                        <td>28000</td>
+                                        <td>-13500</td>
+                                        <td>1100</td>
+                                        <td>15600</td>
+                                        <td>21000</td>
+                                        <td>21500</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 国资委-商品类业务品种汇总表 -->
+                <div id="summary-table-content" class="report-content" style="display: none;">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>交易品种分类</th>
+                                    <th>交易品种</th>
+                                    <th>单位</th>
+                                    <th>期末净持仓规模</th>
+                                    <th>对应实货风险敞口</th>
+                                    <th>期末净持仓规模/对应实货风险敞口（%）</th>
+                                    <th>衍生品期末浮动盈亏（万元）</th>
+                                    <th>衍生品本年实际盈亏（万元）</th>
+                                    <th>对应实货盈亏（万元）</th>
+                                    <th>总盈亏（万元）</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>黄金</td>
+                                    <td>吨</td>
+                                    <td>1500</td>
+                                    <td>1650</td>
+                                    <td>90.9</td>
+                                    <td>125.5</td>
+                                    <td>280.3</td>
+                                    <td>150.2</td>
+                                    <td>430.5</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>白银</td>
+                                    <td>吨</td>
+                                    <td>850</td>
+                                    <td>920</td>
+                                    <td>92.4</td>
+                                    <td>-45.2</td>
+                                    <td>-25.8</td>
+                                    <td>-65.3</td>
+                                    <td>-91.0</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>铂金</td>
+                                    <td>吨</td>
+                                    <td>320</td>
+                                    <td>350</td>
+                                    <td>91.4</td>
+                                    <td>78.9</td>
+                                    <td>120.5</td>
+                                    <td>95.6</td>
+                                    <td>216.1</td>
+                                </tr>
+                                <tr>
+                                    <td>能源类</td>
+                                    <td>原油</td>
+                                    <td>桶</td>
+                                    <td>50000</td>
+                                    <td>55000</td>
+                                    <td>90.9</td>
+                                    <td>-150.3</td>
+                                    <td>-80.7</td>
+                                    <td>-120.5</td>
+                                    <td>-271.2</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>钯金</td>
+                                    <td>公斤</td>
+                                    <td>4500</td>
+                                    <td>4800</td>
+                                    <td>93.8</td>
+                                    <td>185.7</td>
+                                    <td>240.8</td>
+                                    <td>195.4</td>
+                                    <td>436.2</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>铑金</td>
+                                    <td>公斤</td>
+                                    <td>2800</td>
+                                    <td>3000</td>
+                                    <td>93.3</td>
+                                    <td>320.5</td>
+                                    <td>380.2</td>
+                                    <td>340.7</td>
+                                    <td>720.9</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>铱金</td>
+                                    <td>公斤</td>
+                                    <td>3800</td>
+                                    <td>4100</td>
+                                    <td>92.7</td>
+                                    <td>-125.8</td>
+                                    <td>-95.3</td>
+                                    <td>-145.6</td>
+                                    <td>-240.9</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>钌金</td>
+                                    <td>公斤</td>
+                                    <td>5200</td>
+                                    <td>5500</td>
+                                    <td>94.5</td>
+                                    <td>210.4</td>
+                                    <td>265.7</td>
+                                    <td>225.3</td>
+                                    <td>491.0</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>锇金</td>
+                                    <td>公斤</td>
+                                    <td>3100</td>
+                                    <td>3300</td>
+                                    <td>93.9</td>
+                                    <td>-85.6</td>
+                                    <td>-65.2</td>
+                                    <td>-105.8</td>
+                                    <td>-171.0</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>铼金</td>
+                                    <td>公斤</td>
+                                    <td>4200</td>
+                                    <td>4500</td>
+                                    <td>93.3</td>
+                                    <td>155.3</td>
+                                    <td>195.6</td>
+                                    <td>175.2</td>
+                                    <td>370.8</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>锇铱合金</td>
+                                    <td>公斤</td>
+                                    <td>2500</td>
+                                    <td>2700</td>
+                                    <td>92.6</td>
+                                    <td>280.9</td>
+                                    <td>320.4</td>
+                                    <td>290.7</td>
+                                    <td>611.1</td>
+                                </tr>
+                                <tr>
+                                    <td>能源类</td>
+                                    <td>天然气</td>
+                                    <td>立方米</td>
+                                    <td>800000</td>
+                                    <td>850000</td>
+                                    <td>94.1</td>
+                                    <td>-95.7</td>
+                                    <td>-65.3</td>
+                                    <td>-85.2</td>
+                                    <td>-150.9</td>
+                                </tr>
+                                <tr>
+                                    <td>农产品类</td>
+                                    <td>大豆</td>
+                                    <td>吨</td>
+                                    <td>12000</td>
+                                    <td>13000</td>
+                                    <td>92.3</td>
+                                    <td>45.8</td>
+                                    <td>65.2</td>
+                                    <td>55.6</td>
+                                    <td>120.8</td>
+                                </tr>
+                                <tr>
+                                    <td>农产品类</td>
+                                    <td>玉米</td>
+                                    <td>吨</td>
+                                    <td>15000</td>
+                                    <td>16000</td>
+                                    <td>93.8</td>
+                                    <td>-35.4</td>
+                                    <td>-25.7</td>
+                                    <td>-45.9</td>
+                                    <td>-71.6</td>
+                                </tr>
+                                <tr>
+                                    <td>化工类</td>
+                                    <td>聚乙烯</td>
+                                    <td>吨</td>
+                                    <td>8000</td>
+                                    <td>8500</td>
+                                    <td>94.1</td>
+                                    <td>75.3</td>
+                                    <td>95.6</td>
+                                    <td>85.2</td>
+                                    <td>180.8</td>
+                                </tr>
+                                <tr>
+                                    <td>化工类</td>
+                                    <td>聚丙烯</td>
+                                    <td>吨</td>
+                                    <td>9500</td>
+                                    <td>10000</td>
+                                    <td>95.0</td>
+                                    <td>-65.8</td>
+                                    <td>-45.2</td>
+                                    <td>-75.6</td>
+                                    <td>-120.8</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>铜</td>
+                                    <td>吨</td>
+                                    <td>6500</td>
+                                    <td>7000</td>
+                                    <td>92.9</td>
+                                    <td>145.7</td>
+                                    <td>185.3</td>
+                                    <td>165.8</td>
+                                    <td>351.0</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>铝</td>
+                                    <td>吨</td>
+                                    <td>7200</td>
+                                    <td>7500</td>
+                                    <td>96.0</td>
+                                    <td>-95.4</td>
+                                    <td>-75.8</td>
+                                    <td>-115.2</td>
+                                    <td>-191.0</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>锌</td>
+                                    <td>吨</td>
+                                    <td>4800</td>
+                                    <td>5200</td>
+                                    <td>92.3</td>
+                                    <td>65.9</td>
+                                    <td>85.4</td>
+                                    <td>75.6</td>
+                                    <td>161.0</td>
+                                </tr>
+                                <tr>
+                                    <td>金属类</td>
+                                    <td>镍</td>
+                                    <td>吨</td>
+                                    <td>3500</td>
+                                    <td>3800</td>
+                                    <td>92.1</td>
+                                    <td>-135.6</td>
+                                    <td>-115.2</td>
+                                    <td>-155.8</td>
+                                    <td>-271.0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 国资委-衍生品明细表 -->
+                <div id="detail-table-content" class="report-content" style="display: none;">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>企业名称</th>
+                                    <th>交易品种分类</th>
+                                    <th>交易品种</th>
+                                    <th>业务类型</th>
+                                    <th>场内/场外</th>
+                                    <th>境内/境外</th>
+                                    <th>单位</th>
+                                    <th>净持仓规模</th>
+                                    <th>期末浮动盈亏(万元)</th>
+                                    <th>本年实际盈亏(万元)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>白银</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>120</td>
+                                    <td>-12.5</td>
+                                    <td>-8.3</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>白银</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>85</td>
+                                    <td>-8.7</td>
+                                    <td>-5.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>铂金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>65</td>
+                                    <td>15.8</td>
+                                    <td>22.5</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>铂金</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>48</td>
+                                    <td>12.3</td>
+                                    <td>18.9</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>黄金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>320</td>
+                                    <td>45.6</td>
+                                    <td>85.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>黄金</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>280</td>
+                                    <td>38.9</td>
+                                    <td>72.6</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>白银</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>150</td>
+                                    <td>-22.4</td>
+                                    <td>-15.7</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>白银</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>110</td>
+                                    <td>-18.6</td>
+                                    <td>-12.8</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>铂金</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>75</td>
+                                    <td>25.4</td>
+                                    <td>35.7</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>金属类</td>
+                                    <td>黄金</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>吨</td>
+                                    <td>180</td>
+                                    <td>28.7</td>
+                                    <td>52.3</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>金属类</td>
+                                    <td>白银</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>95</td>
+                                    <td>-15.3</td>
+                                    <td>-9.6</td>
+                                </tr>
+                                <tr>
+                                    <td>美泰乐贵金属有限公司</td>
+                                    <td>金属类</td>
+                                    <td>铂金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>32000</td>
+                                    <td>32.1</td>
+                                    <td>48.9</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>钯金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>45000</td>
+                                    <td>58.3</td>
+                                    <td>72.6</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>铑金</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>28000</td>
+                                    <td>85.7</td>
+                                    <td>98.4</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>铱金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>38000</td>
+                                    <td>-42.6</td>
+                                    <td>-35.8</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>金属类</td>
+                                    <td>钌金</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>公斤</td>
+                                    <td>52000</td>
+                                    <td>68.9</td>
+                                    <td>82.3</td>
+                                </tr>
+                                <tr>
+                                    <td>美泰乐贵金属有限公司</td>
+                                    <td>金属类</td>
+                                    <td>锇金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>31000</td>
+                                    <td>-38.4</td>
+                                    <td>-32.7</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>铼金</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>42000</td>
+                                    <td>52.8</td>
+                                    <td>65.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>锇铱合金</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>公斤</td>
+                                    <td>25000</td>
+                                    <td>78.6</td>
+                                    <td>92.1</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>能源类</td>
+                                    <td>原油</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>桶</td>
+                                    <td>50000</td>
+                                    <td>-150.3</td>
+                                    <td>-80.7</td>
+                                </tr>
+                                <tr>
+                                    <td>美泰乐贵金属有限公司</td>
+                                    <td>能源类</td>
+                                    <td>天然气</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>立方米</td>
+                                    <td>800000</td>
+                                    <td>-95.7</td>
+                                    <td>-65.3</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>农产品类</td>
+                                    <td>大豆</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>12000</td>
+                                    <td>45.8</td>
+                                    <td>65.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>农产品类</td>
+                                    <td>玉米</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>15000</td>
+                                    <td>-35.4</td>
+                                    <td>-25.7</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>化工类</td>
+                                    <td>聚乙烯</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>吨</td>
+                                    <td>8000</td>
+                                    <td>75.3</td>
+                                    <td>95.6</td>
+                                </tr>
+                                <tr>
+                                    <td>美泰乐贵金属有限公司</td>
+                                    <td>化工类</td>
+                                    <td>聚丙烯</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>9500</td>
+                                    <td>-65.8</td>
+                                    <td>-45.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>铜</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>6500</td>
+                                    <td>145.7</td>
+                                    <td>185.3</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>铝</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>7200</td>
+                                    <td>-95.4</td>
+                                    <td>-75.8</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>金属类</td>
+                                    <td>锌</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>吨</td>
+                                    <td>4800</td>
+                                    <td>65.9</td>
+                                    <td>85.4</td>
+                                </tr>
+                                <tr>
+                                    <td>美泰乐贵金属有限公司</td>
+                                    <td>金属类</td>
+                                    <td>镍</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>3500</td>
+                                    <td>-135.6</td>
+                                    <td>-115.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>金属类</td>
+                                    <td>锡</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>2800</td>
+                                    <td>58.2</td>
+                                    <td>72.8</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>铅</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>3900</td>
+                                    <td>-48.7</td>
+                                    <td>-42.3</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>能源类</td>
+                                    <td>煤炭</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>吨</td>
+                                    <td>25000</td>
+                                    <td>-82.4</td>
+                                    <td>-68.7</td>
+                                </tr>
+                                <tr>
+                                    <td>美泰乐贵金属有限公司</td>
+                                    <td>农产品类</td>
+                                    <td>小麦</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>18000</td>
+                                    <td>38.6</td>
+                                    <td>52.9</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金国际有限公司</td>
+                                    <td>化工类</td>
+                                    <td>聚氯乙烯</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>7500</td>
+                                    <td>-58.9</td>
+                                    <td>-45.2</td>
+                                </tr>
+                                <tr>
+                                    <td>中博世金科贸有限责任公司</td>
+                                    <td>金属类</td>
+                                    <td>钛</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>吨</td>
+                                    <td>1500</td>
+                                    <td>92.3</td>
+                                    <td>108.7</td>
+                                </tr>
+                                <tr>
+                                    <td>工美进出口有限公司</td>
+                                    <td>金属类</td>
+                                    <td>钼</td>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>吨</td>
+                                    <td>2200</td>
+                                    <td>-68.4</td>
+                                    <td>-55.8</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 报表选择切换
+            const reportSelect = document.getElementById('report-select');
+            const reportContents = document.querySelectorAll('.report-content');
+            
+            if (reportSelect) {
+                reportSelect.addEventListener('change', function() {
+                    // 隐藏所有报表内容
+                    reportContents.forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    
+                    // 显示选中的报表内容
+                    const selectedValue = this.value;
+                    const selectedContent = document.getElementById(`${selectedValue}-content`);
+                    if (selectedContent) {
+                        selectedContent.style.display = 'block';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
