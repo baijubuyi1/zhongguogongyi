@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" language="width=device-width, initial-scale=1.0">
    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- 添加chartjs-plugin-annotation插件以支持图表注解 -->
@@ -187,7 +187,7 @@
         
         .price-items {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 15px;
         }
         
@@ -232,6 +232,16 @@
             color: #FF8C00;
         }
         
+        .rhodium-icon {
+            background-color: rgba(128, 0, 128, 0.2);
+            color: #800080;
+        }
+        
+        .iridium-icon {
+            background-color: rgba(75, 0, 130, 0.2);
+            color: #4B0082;
+        }
+        
         .price-info {
             display: flex;
             flex-direction: column;
@@ -268,18 +278,37 @@
             position: absolute;
             top: 100%;
             left: 0;
-            width: 100%;
+            width: 340%; /* 增加横向宽度 */
             background-color: var(--secondary-bg-color);
             border: 1px solid rgba(74, 144, 226, 0.3);
             border-radius: 8px;
-            padding: 15px;
+            padding: 20px; /* 增加纵向内边距 */
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             z-index: 10;
             display: none;
+            max-height: 400px; /* 增加最大高度 */
+        }
+        
+        .market-analysis-content {
+            display: flex;
+            gap: 30px; /* 增加内容间距 */
         }
         
         .market-analysis-chart {
-            height: 200px;
+            flex: 1;
+            height: 250px; /* 增加图表高度 */
+        }
+        
+        .transaction-table-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 250px; /* 增加表格最大高度 */
+        }
+        
+        .divider {
+            width: 1px;
+            background-color: rgba(74, 144, 226, 0.3);
+            margin: 0 15px; /* 增加分隔线间距 */
         }
         
         /* 标题样式 */
@@ -629,7 +658,7 @@
             }
             
             .price-items {
-                flex-direction: column;
+                grid-template-columns: repeat(3, 1fr);
                 gap: 10px;
             }
             
@@ -690,7 +719,7 @@
             }
             
             .price-items {
-                flex-direction: column;
+                grid-template-columns: 1fr;
                 gap: 15px;
             }
             
@@ -909,25 +938,27 @@
     <nav class="navbar">
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="dashboard.html" class="nav-link">首页面</a>
+                
             </li>
             <li class="nav-item">
                 <a href="index.html" class="nav-link dropdown-toggle active">贵金属业务</a>
                 <div class="dropdown-menu">
                     <a href="index.html" class="dropdown-item">贵金属业务</a>
                     <a href="derivatives.html" class="dropdown-item">金融衍生品</a>
-            </li>
-            <li class="nav-item">
-                <a href="asset-management.html" class="nav-link">资产运营业务</a>
+                </div>
             </li>
             <li class="nav-item">
                 <a href="jewelry-retail.html" class="nav-link">珠宝零售&工艺美术</a>
+            </li>
+            <li class="nav-item">
+                <a href="asset-management.html" class="nav-link">资产运营业务</a>
             </li>
             <li class="nav-item">
                 <a href="绩效考核.html" class="nav-link dropdown-toggle">绩效考核</a>
                 <div class="dropdown-menu">
                     <a href="绩效考核.html" class="dropdown-item">保利工艺考核</a>
                     <a href="事业部子&公司考核.html" class="dropdown-item">事业部&子公司考核</a>
+                </div>
             </li>
             <li class="nav-item">
                 <a href="#" class="nav-link dropdown-toggle">统计查询 </a>
@@ -967,8 +998,89 @@
                         </div>
                     </div>
                     <div class="market-analysis-container" id="gold-analysis">
-                        <div class="market-analysis-chart">
-                            <canvas id="goldMarketChart"></canvas>
+                        <div class="market-analysis-content">
+                            <div class="market-analysis-chart">
+                                <canvas id="goldMarketChart"></canvas>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="transaction-table-container">
+                                <table class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th>名称</th>
+                                            <th>现价</th>
+                                            <th>涨跌</th>
+                                            <th>涨跌幅</th>
+                                            <th>年初至今</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>SGE黄金T+D</td>
+                                            <td>828.02</td>
+                                            <td class="price-up">+9.85</td>
+                                            <td class="price-up">+1.2%</td>
+                                            <td class="price-up">+8.3%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>SGEMini黄金T+D</td>
+                                            <td>827.85</td>
+                                            <td class="price-up">+9.68</td>
+                                            <td class="price-up">+1.18%</td>
+                                            <td class="price-up">+8.1%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>SGE黄金9995</td>
+                                            <td>829.10</td>
+                                            <td class="price-up">+10.03</td>
+                                            <td class="price-up">+1.22%</td>
+                                            <td class="price-up">+8.5%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>SGE黄金9999</td>
+                                            <td>828.95</td>
+                                            <td class="price-up">+9.98</td>
+                                            <td class="price-up">+1.21%</td>
+                                            <td class="price-up">+8.4%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>SGE国际板黄金9999</td>
+                                            <td>829.30</td>
+                                            <td class="price-up">+10.15</td>
+                                            <td class="price-up">+1.24%</td>
+                                            <td class="price-up">+8.6%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>上海金</td>
+                                            <td>828.20</td>
+                                            <td class="price-up">+9.75</td>
+                                            <td class="price-up">+1.19%</td>
+                                            <td class="price-up">+8.2%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>伦敦金现</td>
+                                            <td>1985.30</td>
+                                            <td class="price-up">+23.60</td>
+                                            <td class="price-up">+1.2%</td>
+                                            <td class="price-up">+7.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>COMEX黄金</td>
+                                            <td>1984.90</td>
+                                            <td class="price-up">+23.40</td>
+                                            <td class="price-up">+1.19%</td>
+                                            <td class="price-up">+7.7%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>伦敦金(人民币/克)</td>
+                                            <td>828.50</td>
+                                            <td class="price-up">+9.90</td>
+                                            <td class="price-up">+1.21%</td>
+                                            <td class="price-up">+8.1%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -984,8 +1096,61 @@
                         </div>
                     </div>
                     <div class="market-analysis-container" id="silver-analysis">
-                        <div class="market-analysis-chart">
-                            <canvas id="silverMarketChart"></canvas>
+                        <div class="market-analysis-content">
+                            <div class="market-analysis-chart">
+                                <canvas id="silverMarketChart"></canvas>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="transaction-table-container">
+                                <table class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th>名称</th>
+                                            <th>现价</th>
+                                            <th>涨跌</th>
+                                            <th>涨跌幅</th>
+                                            <th>年初至今</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>SGE白银T+D</td>
+                                            <td>9994.00</td>
+                                            <td class="price-up">+79.95</td>
+                                            <td class="price-up">+0.8%</td>
+                                            <td class="price-up">+6.5%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>上海银</td>
+                                            <td>9992.50</td>
+                                            <td class="price-up">+79.82</td>
+                                            <td class="price-up">+0.8%</td>
+                                            <td class="price-up">+6.4%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>伦敦银现</td>
+                                            <td>24.55</td>
+                                            <td class="price-up">+0.19</td>
+                                            <td class="price-up">+0.78%</td>
+                                            <td class="price-up">+5.9%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>COMEX白银</td>
+                                            <td>24.53</td>
+                                            <td class="price-up">+0.19</td>
+                                            <td class="price-up">+0.78%</td>
+                                            <td class="price-up">+5.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>伦敦银(人民币/千克)</td>
+                                            <td>9990.20</td>
+                                            <td class="price-up">+79.65</td>
+                                            <td class="price-up">+0.8%</td>
+                                            <td class="price-up">+6.3%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1001,8 +1166,47 @@
                         </div>
                     </div>
                     <div class="market-analysis-container" id="platinum-analysis">
-                        <div class="market-analysis-chart">
-                            <canvas id="platinumMarketChart"></canvas>
+                        <div class="market-analysis-content">
+                            <div class="market-analysis-chart">
+                                <canvas id="platinumMarketChart"></canvas>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="transaction-table-container">
+                                <table class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th>名称</th>
+                                            <th>现价</th>
+                                            <th>涨跌</th>
+                                            <th>涨跌幅</th>
+                                            <th>年初至今</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>SGE铂金9995</td>
+                                            <td>331.48</td>
+                                            <td class="price-down">-1.66</td>
+                                            <td class="price-down">-0.5%</td>
+                                            <td class="price-up">+4.2%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>现货铂金(美元/盎司)</td>
+                                            <td>1015.30</td>
+                                            <td class="price-down">-5.07</td>
+                                            <td class="price-down">-0.5%</td>
+                                            <td class="price-up">+3.9%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>NYMEX铂</td>
+                                            <td>1014.80</td>
+                                            <td class="price-down">-5.05</td>
+                                            <td class="price-down">-0.5%</td>
+                                            <td class="price-up">+3.8%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1015,6 +1219,30 @@
                         <div class="price-change price-up" id="palladium-change">
                             <span>↑</span>
                             <span>+1.5%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="price-item" id="rhodium-item">
+                    <div class="metal-icon rhodium-icon">Rh</div>
+                    <div class="price-info">
+                        <div class="metal-name">铑 (美元/盎司)</div>
+                        <div class="metal-price" id="rhodium-price">3250.00</div>
+                        <div class="price-change price-up" id="rhodium-change">
+                            <span>↑</span>
+                            <span>+2.1%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="price-item" id="iridium-item">
+                    <div class="metal-icon iridium-icon">Ir</div>
+                    <div class="price-info">
+                        <div class="metal-name">铱 (元/克)</div>
+                        <div class="metal-price" id="iridium-price">485.60</div>
+                        <div class="price-change price-down" id="iridium-change">
+                            <span>↓</span>
+                            <span>-0.8%</span>
                         </div>
                     </div>
                 </div>
@@ -1157,14 +1385,14 @@
             </div>
             <div class="module-body">
                 <div class="precious-metal-section">
-                    <div class="category-card fade-in delay-1" onclick="navigateToDetails('platinum')">
+                    <div class="category-card fade-in delay-1" onclick="navigateToDetails('铂金')">
                         <div class="category-header">
                             <h3 class="category-title">铂金业务</h3>
                             <span class="category-value platinum">102,345</span>
                         </div>
                         <div class="category-metrics">
                             <div class="metric-row">
-                                <span class="metric-label">销售量(千克)</span>
+                                <span class="metric-label">销售量(吨)</span>
                                 <span class="metric-data platinum">1,845</span>
                             </div>
                             <div class="metric-row">
@@ -1178,14 +1406,14 @@
                         </div>
                     </div>
                     
-                    <div class="category-card fade-in delay-2" onclick="navigateToDetails('gold')">
+                    <div class="category-card fade-in delay-2" onclick="navigateToDetails('黄金')">
                         <div class="category-header">
                             <h3 class="category-title">黄金业务</h3>
                             <span class="category-value gold">136,580</span>
                         </div>
                         <div class="category-metrics">
                             <div class="metric-row">
-                                <span class="metric-label">销售量(千克)</span>
+                                <span class="metric-label">销售量(吨)</span>
                                 <span class="metric-data gold">2,630</span>
                             </div>
                             <div class="metric-row">
@@ -1199,14 +1427,14 @@
                         </div>
                     </div>
                     
-                    <div class="category-card fade-in delay-3" onclick="navigateToDetails('silver')">
+                    <div class="category-card fade-in delay-3" onclick="navigateToDetails('白银')">
                         <div class="category-header">
                             <h3 class="category-title">白银业务</h3>
                             <span class="category-value silver">48,710</span>
                         </div>
                         <div class="category-metrics">
                             <div class="metric-row">
-                                <span class="metric-label">销售量(千克)</span>
+                                <span class="metric-label">销售量(吨)</span>
                                 <span class="metric-data silver">1,167</span>
                             </div>
                             <div class="metric-row">
@@ -1227,7 +1455,7 @@
                         </div>
                         <div class="category-metrics">
                             <div class="metric-row">
-                                <span class="metric-label">销售量(千克)</span>
+                                <span class="metric-label">销售量(吨)</span>
                                 <span class="metric-data palladium">1,325</span>
                             </div>
                             <div class="metric-row">
@@ -1318,11 +1546,11 @@
                             <label class="filter-label">品种</label>
                             <select class="filter-select" id="品种Filter2">
                                 <option value="all">全部</option>
-                                <option value="黄金">黄金</option>
-                                <option value="白银">白银</option>
-                                <option value="铂金">铂金</option>
-                                <option value="钯金">钯金</option>
-                                <option value="其他铂族金属">其他铂族金属</option>
+                                <option value="黄金">黄金（吨）</option>
+                                <option value="白银">白银（吨）</option>
+                                <option value="铂金">铂金（吨）</option>
+                                <option value="钯金">钯金（千克）</option>
+                                <option value="其他铂族金属">其他铂族金属（千克）</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -1332,6 +1560,7 @@
                                 <option value="交易量">交易量</option>
                                 <option value="交易额">交易额</option>
                             </select>
+                        
                         </div>
                     </div>
                     
@@ -1611,6 +1840,17 @@
                                 <option value="交易额">交易额</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label class="filter-label">交易品种</label>
+                            <select class="filter-select" id="contentFilter2">
+                                <option value="all">全部</option>
+                                <option value="交易量">黄金（吨）</option>
+                                <option value="交易额">白银（吨）</option>
+                                <option value="交易额">铂金（吨）</option>
+                                <option value="交易额">钯金（千克）</option>
+                                <option value="交易额">其他铂族金属（千克）</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
@@ -1822,7 +2062,15 @@
         }
         
         function navigateToDetails(metal) {
-            window.location.href = `details.html?metal=${metal}`;
+            if (metal === '铂金') {
+                window.location.href = 'details-铂金.html';
+            } else if (metal === '黄金') {
+                window.location.href = 'details-黄金.html';
+            } else if (metal === '白银') {
+                window.location.href = 'details-白银.html';
+            } else {
+                window.location.href = `details.html?metal=${metal}`;
+            }
         }
         
         // 金属价格实时更新模拟
@@ -1833,40 +2081,54 @@
             const platinumPrice = document.getElementById('platinum-price');
             const silverPrice = document.getElementById('silver-price');
             const palladiumPrice = document.getElementById('palladium-price');
+            const rhodiumPrice = document.getElementById('rhodium-price');
+            const iridiumPrice = document.getElementById('iridium-price');
             const goldChange = document.getElementById('gold-change');
             const platinumChange = document.getElementById('platinum-change');
             const silverChange = document.getElementById('silver-change');
             const palladiumChange = document.getElementById('palladium-change');
+            const rhodiumChange = document.getElementById('rhodium-change');
+            const iridiumChange = document.getElementById('iridium-change');
             
             // 获取当前价格并添加随机波动
             let currentGold = parseFloat(goldPrice.textContent);
             let currentPlatinum = parseFloat(platinumPrice.textContent);
             let currentSilver = parseFloat(silverPrice.textContent);
             let currentPalladium = parseFloat(palladiumPrice.textContent);
+            let currentRhodium = parseFloat(rhodiumPrice.textContent);
+            let currentIridium = parseFloat(iridiumPrice.textContent);
             
             // 随机波动范围为当前价格的±0.2%
             const goldDelta = currentGold * (Math.random() * 0.004 - 0.002);
             const platinumDelta = currentPlatinum * (Math.random() * 0.004 - 0.002);
             const silverDelta = currentSilver * (Math.random() * 0.004 - 0.002);
             const palladiumDelta = currentPalladium * (Math.random() * 0.004 - 0.002);
+            const rhodiumDelta = currentRhodium * (Math.random() * 0.004 - 0.002);
+            const iridiumDelta = currentIridium * (Math.random() * 0.004 - 0.002);
             
             // 更新价格
             const newGold = (currentGold + goldDelta).toFixed(2);
             const newPlatinum = (currentPlatinum + platinumDelta).toFixed(2);
             const newSilver = (currentSilver + silverDelta).toFixed(2);
             const newPalladium = (currentPalladium + palladiumDelta).toFixed(2);
+            const newRhodium = (currentRhodium + rhodiumDelta).toFixed(2);
+            const newIridium = (currentIridium + iridiumDelta).toFixed(2);
             
             // 更新DOM
             goldPrice.textContent = newGold;
             platinumPrice.textContent = newPlatinum;
             silverPrice.textContent = newSilver;
             palladiumPrice.textContent = newPalladium;
+            rhodiumPrice.textContent = newRhodium;
+            iridiumPrice.textContent = newIridium;
             
             // 更新变化率和箭头
             updatePriceChange(goldChange, goldDelta > 0, Math.abs((goldDelta / currentGold) * 100).toFixed(1));
             updatePriceChange(platinumChange, platinumDelta > 0, Math.abs((platinumDelta / currentPlatinum) * 100).toFixed(1));
             updatePriceChange(silverChange, silverDelta > 0, Math.abs((silverDelta / currentSilver) * 100).toFixed(1));
             updatePriceChange(palladiumChange, palladiumDelta > 0, Math.abs((palladiumDelta / currentPalladium) * 100).toFixed(1));
+            updatePriceChange(rhodiumChange, rhodiumDelta > 0, Math.abs((rhodiumDelta / currentRhodium) * 100).toFixed(1));
+            updatePriceChange(iridiumChange, iridiumDelta > 0, Math.abs((iridiumDelta / currentIridium) * 100).toFixed(1));
             
             // 5秒后再次更新
             setTimeout(updateMetalPrices, 5000);

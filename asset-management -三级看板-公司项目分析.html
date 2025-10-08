@@ -237,6 +237,10 @@
             height: 400px;
         }
         
+        .chart-container-small {
+            height: 200px;
+        }
+        
         /* 布局网格 */
         .layout-grid {
             display: grid;
@@ -436,6 +440,9 @@
         .delay-4 { animation-delay: 0.4s; }
         .delay-5 { animation-delay: 0.5s; }
         .delay-6 { animation-delay: 0.6s; }
+        .delay-7 { animation-delay: 0.7s; }
+        .delay-8 { animation-delay: 0.8s; }
+        .delay-9 { animation-delay: 0.9s; }
         
         /* 响应式设计 */
         @media (max-width: 1200px) {
@@ -529,9 +536,54 @@
             </div>
         </div>
         
+        <!-- 新增的三个饼图模块 -->
+        <div class="layout-grid-triple">
+            <div class="card fade-in-up delay-1">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📊</span>
+                        各资产类型占比
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container chart-container-small">
+                        <canvas id="assetTypeRatioChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card fade-in-up delay-2">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">💰</span>
+                        各资产类型营收占比
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container chart-container-small">
+                        <canvas id="assetTypeRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card fade-in-up delay-3">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📈</span>
+                        各资产类型出租率
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container chart-container-small">
+                        <canvas id="assetTypeRentalRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- 多维度图表分析 -->
         <div class="layout-grid">
-            <div class="card fade-in-up delay-1">
+            <div class="card fade-in-up delay-4">
                 <div class="card-header">
                     <h2 class="card-title">
                         <span class="card-icon">📊</span>
@@ -545,7 +597,7 @@
                 </div>
             </div>
             
-            <div class="card fade-in-up delay-2">
+            <div class="card fade-in-up delay-5">
                 <div class="card-header">
                     <h2 class="card-title">
                         <span class="card-icon">🌹</span>
@@ -560,8 +612,98 @@
             </div>
         </div>
         
+        <!-- 公司资产明细（已移动至此位置） -->
+        <div class="card fade-in-up delay-6">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="card-icon">📋</span>
+                    公司资产明细
+                </h2>
+            </div>
+            <div class="card-body">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>公司名称</th>
+                            <th>资产类型</th>
+                            <th>资产名称</th>
+                            <th>所在省份</th>
+                            <th>所在城市</th>
+                            <th>具体位置</th>
+                            <th>资产面积</th>
+                            <th>出租率</th>
+                            <th>可出租面积</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>中艺资产管理公司</td>
+                            <td>写字楼</td>
+                            <td>北京中艺大厦</td>
+                            <td>北京市</td>
+                            <td>北京市</td>
+                            <td>朝阳区建国路88号</td>
+                            <td>15,000㎡</td>
+                            <td>85%</td>
+                            <td>2,250㎡</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>中艺资产管理公司</td>
+                            <td>商业零售</td>
+                            <td>上海工美大厦</td>
+                            <td>上海市</td>
+                            <td>上海市</td>
+                            <td>黄浦区南京东路123号</td>
+                            <td>12,000㎡</td>
+                            <td>78%</td>
+                            <td>2,640㎡</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>中艺资产管理公司</td>
+                            <td>产业园区</td>
+                            <td>深圳创意园</td>
+                            <td>广东省</td>
+                            <td>深圳市</td>
+                            <td>南山区科技园南路456号</td>
+                            <td>18,000㎡</td>
+                            <td>92%</td>
+                            <td>1,440㎡</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>中艺资产管理公司</td>
+                            <td>写字楼</td>
+                            <td>广州艺术中心</td>
+                            <td>广东省</td>
+                            <td>广州市</td>
+                            <td>天河区珠江新城789号</td>
+                            <td>10,000㎡</td>
+                            <td>70%</td>
+                            <td>3,000㎡</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>中艺资产管理公司</td>
+                            <td>商业零售</td>
+                            <td>杭州文化广场</td>
+                            <td>浙江省</td>
+                            <td>杭州市</td>
+                            <td>西湖区文三路321号</td>
+                            <td>14,000㎡</td>
+                            <td>80%</td>
+                            <td>2,800㎡</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
         <!-- 合同明细列表 -->
-        <div class="card fade-in-up delay-3">
+        <div class="card fade-in-up delay-7">
             <div class="card-header">
                 <h2 class="card-title">
                     <span class="card-icon">📋</span>
@@ -744,6 +886,115 @@
         
         // 初始化图表
         function initializeCharts() {
+            // 各资产类型占比饼图
+            if (document.getElementById('assetTypeRatioChart')) {
+                const ctx = document.getElementById('assetTypeRatioChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['写字楼', '商业零售', '产业园区', '长租公寓'],
+                        datasets: [{
+                            data: [35, 25, 25, 15],
+                            backgroundColor: [
+                                '#00E5FF',
+                                '#4D8DFF',
+                                '#FFD700',
+                                '#00B894'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    color: '#FFFFFF',
+                                    font: { size: 12 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 各资产类型营收占比饼图
+            if (document.getElementById('assetTypeRevenueChart')) {
+                const ctx = document.getElementById('assetTypeRevenueChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['写字楼', '商业零售', '产业园区', '长租公寓'],
+                        datasets: [{
+                            data: [45, 30, 20, 5],
+                            backgroundColor: [
+                                '#00E5FF',
+                                '#4D8DFF',
+                                '#FFD700',
+                                '#00B894'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    color: '#FFFFFF',
+                                    font: { size: 12 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 各资产类型出租率饼图
+            if (document.getElementById('assetTypeRentalRateChart')) {
+                const ctx = document.getElementById('assetTypeRentalRateChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['写字楼', '商业零售', '产业园区', '长租公寓'],
+                        datasets: [{
+                            data: [82, 75, 88, 92],
+                            backgroundColor: [
+                                '#00E5FF',
+                                '#4D8DFF',
+                                '#FFD700',
+                                '#00B894'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    color: '#FFFFFF',
+                                    font: { size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
             // 项目营收Top10柱状图
             if (document.getElementById('revenueTop10Chart')) {
                 const ctx = document.getElementById('revenueTop10Chart').getContext('2d');

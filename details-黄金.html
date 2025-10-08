@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄金业务 - 销售合同明细</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 全局样式 */
+        :root {
+            --main-bg-color: #0A1931;
+            --secondary-bg-color: #101f3d;
+            --gold-color: #FFD700;
+            --gold-alt-color: #B08D57;
+            --orange-color: #FF8C00;
+            --red-color: #FF4500;
+            --blue-color: #4A90E2;
+            --light-blue-color: #00BFFF;
+            --white-color: #FFFFFF;
+            --light-gold: #FFF8E1;
+            --green-color: #00FF00; /* 新增绿色用于上涨箭头 */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--white-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 添加科技感网格效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(74, 144, 226, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 144, 226, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        .container {
+            padding: 20px;
+            max-width: 100vw;
+            margin: 0 auto;
+            /* 确保容器可以自由扩展 */
+            height: auto;
+            min-height: 100vh;
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .breadcrumb-item {
+            color: var(--white-color);
+            opacity: 0.8;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .breadcrumb-item:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 10px;
+            color: var(--light-blue-color);
+            opacity: 0.6;
+        }
+        
+        .breadcrumb-current {
+            color: var(--gold-color);
+            font-weight: bold;
+        }
+        
+        /* 返回按钮样式 */
+        .back-button {
+            background-color: var(--secondary-bg-color);
+            color: var(--gold-color);
+            border: 1px solid var(--gold-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-button:hover {
+            background-color: var(--gold-color);
+            color: var(--main-bg-color);
+            text-decoration: none;
+        }
+        
+        /* 标题样式 */
+        .dashboard-title {
+            color: var(--gold-color);
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        /* 指标卡片 */
+        .metric-card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+        }
+        
+        .metric-title {
+            font-size: 1.3rem;
+            color: var(--light-gold);
+        }
+        
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-block {
+            background-color: rgba(16, 31, 61, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--white-color);
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--gold-color);
+        }
+        
+        .metric-value.positive {
+            color: var(--orange-color);
+        }
+        
+        .metric-value.negative {
+            color: var(--red-color);
+        }
+        
+        .metric-unit {
+            font-size: 0.9rem;
+            color: var(--white-color);
+            opacity: 0.7;
+        }
+        
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+        
+        /* 内贸模块样式 */
+        .trade-modules {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .trade-module {
+            flex: 1;
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .module-title {
+            font-size: 1.2rem;
+            color: var(--light-gold);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .module-metrics {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .metric-card-container {
+            flex: 1;
+            background-color: rgba(16, 31, 61, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .metric-card-title {
+            font-size: 0.9rem;
+            color: var(--white-color);
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        
+        .metric-card-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--gold-color);
+            margin-bottom: 5px;
+        }
+        
+        .trend-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        
+        .trend-arrow {
+            margin-right: 4px;
+            font-weight: bold;
+        }
+        
+        .trend-up {
+            color: var(--green-color);
+        }
+        
+        .trend-down {
+            color: var(--red-color);
+        }
+        
+        .trend-value {
+            font-size: 0.85rem;
+        }
+        
+        /* 表格样式 */
+        .table-section {
+            margin-top: 30px;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .table-title {
+            font-size: 1.3rem;
+            color: var(--light-gold);
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background-color: rgba(16, 31, 61, 0.7);
+            border-radius: 5px;
+            padding: 5px 10px;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+        }
+        
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--white-color);
+            padding: 5px;
+            outline: none;
+        }
+        
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .search-icon {
+            color: var(--blue-color);
+            margin-right: 5px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .data-table th {
+            background-color: rgba(16, 31, 61, 0.9);
+            color: var(--gold-color);
+            font-weight: bold;
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid rgba(74, 144, 226, 0.3);
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: rgba(16, 31, 61, 0.5);
+        }
+        
+        .data-table tr:nth-child(odd) {
+            background-color: rgba(10, 25, 49, 0.3);
+        }
+        
+        .data-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.1);
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+        
+        .contract-id {
+            color: var(--gold-color);
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-normal {
+            background-color: rgba(74, 144, 226, 0.2);
+            color: var(--light-blue-color);
+        }
+        
+        .status-warning {
+            background-color: rgba(255, 140, 0, 0.2);
+            color: var(--orange-color);
+        }
+        
+        .status-danger {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: var(--red-color);
+        }
+        
+        .action-icon {
+            color: var(--blue-color);
+            cursor: pointer;
+            margin-right: 5px;
+            transition: color 0.3s;
+        }
+        
+        .action-icon:hover {
+            color: var(--gold-color);
+        }
+        
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .page-button {
+            background-color: rgba(16, 31, 61, 0.7);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            color: var(--white-color);
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-button:hover {
+            background-color: rgba(74, 144, 226, 0.2);
+            border-color: var(--gold-color);
+        }
+        
+        .page-button.active {
+            background-color: rgba(255, 215, 0, 0.2);
+            color: var(--gold-color);
+            border-color: var(--gold-color);
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+        
+        .delay-3 {
+            animation-delay: 0.6s;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .metrics-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .trade-modules {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .search-box {
+                width: 100%;
+                margin-top: 10px;
+            }
+            
+            .metrics-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .module-metrics {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="dashboard.html" class="breadcrumb-item">首页</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="index.html" class="breadcrumb-item">贵金属业务</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="management.html" class="breadcrumb-item">按品种分析</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current" id="metal-name">黄金业务</span>
+        </div>
+        
+        <!-- 添加返回上一级按钮 -->
+        <a href="index.html" class="back-button">← 返回上一级</a>
+        
+        <h1 class="dashboard-title" id="page-title">黄金业务 - 销售合同明细</h1>
+        
+        <div class="metric-card fade-in">
+            <div class="metric-header">
+                <h2 class="metric-title" id="main-metric-title">黄金业务关键指标</h2>
+            </div>
+            
+            <div class="metrics-row">
+                <div class="metric-block">
+                    <div class="metric-label">总交易额(万元)</div>
+                    <div class="metric-value">102,345</div>
+                </div>
+                <div class="metric-block">
+                    <div class="metric-label">销售量(千克)</div>
+                    <div class="metric-value">1,845</div>
+                </div>
+                <div class="metric-block">
+                    <div class="metric-label">平均价格(元/克)</div>
+                    <div class="metric-value">554.7</div>
+                </div>
+                <div class="metric-block">
+                    <div class="metric-label">毛利率</div>
+                    <div class="metric-value">24.8%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="salesTrendChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 新增的内贸模块 -->
+        <div class="trade-modules">
+            <!-- 内贸-采购模块 -->
+            <div class="trade-module fade-in delay-1">
+                <h3 class="module-title">转口业务</h3>
+                <div class="module-metrics">
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">销售总额（亿）</div>
+                        <div class="metric-card-value">12.5</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-up">↑</span>
+                            <span class="trend-value">+8.2%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">采购总额（亿）</div>
+                        <div class="metric-card-value">3.8</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-down">↓</span>
+                            <span class="trend-value">-2.1%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">平均利润价格(元/千克)</div>
+                        <div class="metric-card-value">328</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-up">↑</span>
+                            <span class="trend-value">+5.7%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">订单签订数量</div>
+                        <div class="metric-card-value">42</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-up">↑</span>
+                            <span class="trend-value">+12.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 内贸-销售模块 -->
+            <div class="trade-module fade-in delay-2">
+                <h3 class="module-title">加工业务</h3>
+                <div class="module-metrics">
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">收入总额（亿）</div>
+                        <div class="metric-card-value">15.2</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-up">↑</span>
+                            <span class="trend-value">+10.3%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">仓储费（万元）</div>
+                        <div class="metric-card-value">4.1</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-up">↑</span>
+                            <span class="trend-value">+3.8%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">毛利润</div>
+                        <div class="metric-card-value">371</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-up">↑</span>
+                            <span class="trend-value">+6.1%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card-container">
+                        <div class="metric-card-title">合同签订数量</div>
+                        <div class="metric-card-value">38</div>
+                        <div class="trend-container">
+                            <span class="trend-arrow trend-down">↓</span>
+                            <span class="trend-value">-5.2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-section fade-in delay-3">
+            <div class="table-header">
+                <h2 class="table-title">黄金销售合同明细</h2>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="搜索合同号、客户..." id="searchInput">
+                </div>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>合同编号</th>
+                        <th>交易公司</th>
+                        <th>客户名称</th>
+                        <th>合同类型</th>
+                        <th>品种</th>
+                        <th>合同金额(万元)</th>
+                        <th>数量(千克)</th>
+                        <th>签订日期</th>
+                        <th>交付日期</th>
+                        <th>未回款金额(万元)</th>
+                        <th>状态</th>
+                        <!-- 删除了操作列 -->
+                    </tr>
+                </thead>
+                <tbody id="contractTableBody">
+                    <!-- 表格内容将由JavaScript填充 -->
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <button class="page-button">上一页</button>
+                <button class="page-button active">1</button>
+                <button class="page-button">2</button>
+                <button class="page-button">3</button>
+                <button class="page-button">下一页</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 合同数据
+        const contractData = [
+            {
+                id: "PT-202205-0023",
+                tradingCompany: "中博世金",
+                customer: "上海宝石科技有限公司",
+                contractType: "销售合同",
+                variety: "Pt950",
+                amount: 2450,
+                quantity: 45,
+                signDate: "2025-03-15",
+                deliveryDate: "2025-04-15",
+                outstandingAmount: 1200,
+                status: "进行中"
+            },
+            {
+                id: "PT-202205-0024",
+                tradingCompany: "工美进出口",
+                customer: "北京金辉贵金属有限公司",
+                contractType: "采购合同",
+                variety: "Pt999",
+                amount: 1850,
+                quantity: 32,
+                signDate: "2025-03-10",
+                deliveryDate: "2025-04-05",
+                outstandingAmount: 0,
+                status: "已完成"
+            },
+            {
+                id: "PT-202205-0025",
+                tradingCompany: "中博世金",
+                customer: "广州南方贵金属交易所",
+                contractType: "采购合同",
+                variety: "Pt950",
+                amount: 3560,
+                quantity: 63,
+                signDate: "2025-02-28",
+                deliveryDate: "2025-03-30",
+                outstandingAmount: 1500,
+                status: "进行中"
+            },
+            {
+                id: "PT-202205-0026",
+                tradingCompany: "中博世金",
+                customer: "深圳市金鑫珠宝首饰有限公司",
+                contractType: "销售合同",
+                variety: "Pt999",
+                amount: 980,
+                quantity: 18,
+                signDate: "2025-02-20",
+                deliveryDate: "2025-03-15",
+                outstandingAmount: 0,
+                status: "已完成"
+            },
+            {
+                id: "PT-202205-0027",
+                tradingCompany: "工美进出口",
+                customer: "上海黄金交易所",
+                contractType: "销售合同",
+                variety: "Pt950",
+                amount: 5280,
+                quantity: 95,
+                signDate: "2025-02-15",
+                deliveryDate: "2025-03-25",
+                outstandingAmount: 5280,
+                status: "逾期"
+            }
+        ];
+        
+        // 加载合同数据到表格
+        function loadContractData() {
+            const tableBody = document.getElementById('contractTableBody');
+            tableBody.innerHTML = '';
+            
+            contractData.forEach(contract => {
+                const tr = document.createElement('tr');
+                
+                // 状态类
+                let statusClass = 'status-normal';
+                if (contract.status === '逾期') {
+                    statusClass = 'status-danger';
+                } else if (contract.status === '已完成') {
+                    statusClass = 'status-normal';
+                } else if (contract.status === '进行中') {
+                    statusClass = 'status-warning';
+                }
+                
+                tr.innerHTML = `
+                    <td><a href="javascript:void(0)" class="contract-id" onclick="openBusinessSystem('${contract.id}')">${contract.id}</a></td>
+                    <td>${contract.tradingCompany}</td>
+                    <td>${contract.customer}</td>
+                    <td>${contract.contractType}</td>
+                    <td>${contract.variety}</td>
+                    <td>${contract.amount.toLocaleString()}</td>
+                    <td>${contract.quantity}</td>
+                    <td>${contract.signDate}</td>
+                    <td>${contract.deliveryDate}</td>
+                    <td>${contract.outstandingAmount.toLocaleString()}</td>
+                    <td><span class="status-badge ${statusClass}">${contract.status}</span></td>
+                    <!-- 删除了操作列的内容 -->
+                `;
+                
+                tableBody.appendChild(tr);
+            });
+        }
+        
+        // 打开业务系统函数
+        function openBusinessSystem(contractId) {
+            // 跳转到框架合同详情页面
+            window.location.href = `framework-contract-detail.html?contract=${contractId}`;
+        }
+        
+        // 初始化销售趋势图表
+        function initSalesTrendChart() {
+            const ctx = document.getElementById('salesTrendChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '销售额(万元)',
+                        data: [15200, 16800, 18500, 16300, 17800, 17745],
+                        borderColor: '#FFD700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: '销售量(千克)',
+                        data: [280, 305, 325, 310, 320, 305],
+                        borderColor: '#4A90E2',
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        borderDash: [5, 5],
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(74, 144, 226, 0.1)'
+                            },
+                            ticks: {
+                                color: '#FFF8E1'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(74, 144, 226, 0.1)'
+                            },
+                            ticks: {
+                                color: '#FFF8E1'
+                            },
+                            title: {
+                                display: true,
+                                text: '销售额(万元)',
+                                color: '#FFF8E1'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                color: '#4A90E2'
+                            },
+                            title: {
+                                display: true,
+                                text: '销售量(千克)',
+                                color: '#4A90E2'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#FFF8E1'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContractData();
+            initSalesTrendChart();
+            
+            // 搜索功能
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#contractTableBody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if(text.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
