@@ -149,64 +149,185 @@
             transform: rotate(180deg);
         }
         
-        /* 核心KPI横条 */
-        .kpi-banner {
-            background-color: var(--secondary-bg-color);
-            padding: 20px 30px;
-            margin: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
+        /* KPI 容器样式（与dashboard.html保持一致） */
+        .kpi-container {
             display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
             justify-content: space-between;
-            gap: 20px;
         }
-        
+
+        /* KPI 卡片样式（与dashboard.html保持一致） */
         .kpi-card {
+            background-color: var(--secondary-bg-color);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-radius: 10px;
+            padding: 12px;
             flex: 1;
-            background-color: rgba(16, 31, 61, 0.5);
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(74, 144, 226, 0.2);
-            transition: all 0.3s;
-            cursor: pointer;
+            margin: 0 3px 10px 3px;
+            min-width: 140px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 110px;
         }
-        
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 12px;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+            z-index: -1;
+            animation: borderGlow 3s infinite alternate;
+        }
+
         .kpi-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
             border-color: var(--gold-color);
         }
-        
+
+        .kpi-title {
+            font-size: 0.9rem;
+            color: var(--light-gold);
+            margin-bottom: 8px;
+        }
+
         .kpi-value {
-            font-size: 2.2rem;
+            font-size: 1.4rem;
             font-weight: bold;
             color: var(--gold-color);
             margin-bottom: 8px;
+            display: flex;
+            align-items: baseline;
         }
-        
-        .kpi-label {
+
+        .kpi-value .unit {
             font-size: 0.9rem;
-            color: var(--white-color);
-            opacity: 0.8;
-            margin-bottom: 8px;
+            margin-left: 5px;
+            color: var(--light-gold);
         }
-        
-        .kpi-trend {
-            font-size: 0.85rem;
+
+        .kpi-change {
+            font-size: 0.8rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 4px;
         }
-        
-        .trend-up {
-            color: var(--green-color);
+
+        .kpi-change.positive {
+            color: var(--orange-color);
         }
-        
-        .trend-down {
+
+        .kpi-change.negative {
             color: var(--red-color);
+        }
+
+        .kpi-change i {
+            margin-right: 3px;
+        }
+
+        /* 动画效果 */
+        @keyframes borderGlow {
+            0% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.6s;
+        }
+        
+        .card {
+            background-color: var(--secondary-bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .card-highlight {
+            border: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+        }
+
+        .card-highlight::before {
+             background: linear-gradient(90deg, var(--gold-color), var(--light-blue-color));
+        }
+
+        .card-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .card-title {
+            color: var(--light-gold);
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            color: var(--gold-color);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* 新增双模块容器 */
+        .top-modules {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 0 30px;
+            margin-top: 20px;
         }
         
         /* 主要内容区 - 修改为与dashboard一致的网格布局 */
@@ -215,6 +336,7 @@
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 25px;
+            margin-top: 20px;
         }
         
         /* 左侧业务板块区域 */
@@ -455,6 +577,10 @@
         }
         
         @media (max-width: 1200px) {
+            .top-modules {
+                grid-template-columns: 1fr;
+            }
+            
             .main-content {
                 grid-template-columns: 1fr;
             }
@@ -536,6 +662,10 @@
             .chart-container {
                 height: 200px;
             }
+            
+            .top-modules {
+                padding: 0 15px;
+            }
         }
     </style>
 </head>
@@ -544,20 +674,20 @@
     <nav class="navbar">
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="dashboard.html" class="nav-link">首页面</a>
+                
             </li>
             <li class="nav-item">
                 <a href="index.html" class="nav-link dropdown-toggle">贵金属业务</a>
                 <div class="dropdown-menu">
                     <a href="index.html" class="dropdown-item">贵金属业务</a>
                     <a href="derivatives.html" class="dropdown-item">金融衍生品</a>
-            </li>
-            <li class="nav-item">
-                <a href="asset-management.html" class="nav-link">资产运营业务</a>
+            
             </li>
             <li class="nav-item">
                 <a href="jewelry-retail.html" class="nav-link active">珠宝零售&工艺美术</a>
-            
+            </li>
+            <li class="nav-item">
+                <a href="asset-management.html" class="nav-link">资产运营业务</a>
             </li>
             <li class="nav-item">
                 <a href="绩效考核.html" class="nav-link dropdown-toggle">绩效考核</a>
@@ -584,44 +714,87 @@
         </ul>
     </nav>
     
-    <!-- 核心KPI横条 -->
-    <div class="kpi-banner">
-        <div class="kpi-card" onclick="handleKPIClick('revenue')">
-            <div class="kpi-value">1.25亿</div>
-            <div class="kpi-label">总收入</div>
-            <div class="kpi-trend trend-up">
-                <span>↑</span>
-                <span>+15.2%</span>
+    <!-- 新增顶部模块 -->
+    <div class="top-modules">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="card-icon">📊</span>
+                    珠宝零售整体情况
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <div class="kpi-title">总收入 (万元)</div>
+                        <div class="kpi-value">8,500</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 较上月: +15.2%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">总收入完成度 (%)</div>
+                        <div class="kpi-value">72</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 年度目标完成率: 72%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">加盟费收入 (万元)</div>
+                        <div class="kpi-value">4,000</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 较上月: +8.9%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">代理费收入 (万元)</div>
+                        <div class="kpi-value">2,340</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 较上月: +5.3%
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="kpi-card" onclick="handleKPIClick('profit')">
-            <div class="kpi-value">2,340万</div>
-            <div class="kpi-label">总利润</div>
-            <div class="kpi-trend trend-up">
-                <span>↑</span>
-                <span>+8.9%</span>
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="card-icon">📊</span>
+                    工艺美术整体情况
+                </h2>
             </div>
-        </div>
-        
-        <div class="kpi-card" onclick="handleKPIClick('completion')">
-            <div class="kpi-value">
-                <svg class="progress-ring" viewBox="0 0 120 120">
-                    <circle class="progress-ring-circle" stroke="#101f3d" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
-                    <circle class="progress-ring-circle" stroke="#FFD700" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" 
-                        stroke-dasharray="326.73" stroke-dashoffset="104.55"/>
-                    <text x="60" y="65" text-anchor="middle" fill="#FFD700" font-size="24" font-weight="bold">68%</text>
-                </svg>
-            </div>
-            <div class="kpi-label">总收入完成率</div>
-        </div>
-        
-        <div class="kpi-card" onclick="handleKPIClick('efficiency')">
-            <div class="kpi-value">18.5%</div>
-            <div class="kpi-label">费用效率</div>
-            <div class="kpi-trend trend-up">
-                <span>↓</span>
-                <span>-2.1%</span>
+            <div class="card-body">
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <div class="kpi-title">营业收入 (万元)</div>
+                        <div class="kpi-value">3,200</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 较上月: +11.5%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">预算完成度 (%)</div>
+                        <div class="kpi-value">65</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 年度目标完成率: 65%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">毛利润 (万元)</div>
+                        <div class="kpi-value">980</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 较上月: +7.2%
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">利润总额 (万元)</div>
+                        <div class="kpi-value">750</div>
+                        <div class="kpi-change positive">
+                            <i>▲</i> 较上月: +9.8%
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
